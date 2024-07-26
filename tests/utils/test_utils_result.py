@@ -1,11 +1,10 @@
 from ivy.utils import Result
 
 from unittest import TestCase
-import pytest
 
 
 class TestResult(TestCase):
-    "Testing Class for Option type class"
+    "Testing Class for Result type class"
 
     def setUp(self):
         self.result_ok = Result[int, ZeroDivisionError](5)
@@ -13,7 +12,7 @@ class TestResult(TestCase):
 
     def test_result_ok_unwrap(self):
         self.assertEqual(self.result_ok.unwrap(), 5)
-    
+
     def test_result_construct_ok(self):
         result: Result[int, ZeroDivisionError] = Result.ok(5)
         self.assertEqual(result.unwrap(), 5)
@@ -21,7 +20,7 @@ class TestResult(TestCase):
 
     def test_result_err_unwrap(self):
         self.assertTrue(isinstance(self.result_err.unwrap(), ZeroDivisionError))
-    
+
     def test_result_constructor_err(self):
         result: Result[int, ZeroDivisionError] = Result.err(ZeroDivisionError())
         self.assertTrue(result.is_err())
