@@ -54,7 +54,13 @@ class ROCPlotter:
         """
         auc_label = " (AUC = %0.2f)" % self._auc if self._auc else ""
 
-        self._ax.plot(self._fpr, self._tpr, color=curve_color, lw=2, label=(plot_label + auc_label))
+        self._ax.plot(
+            self._fpr,
+            self._tpr,
+            color=curve_color,
+            lw=2,
+            label=(plot_label + auc_label),
+        )
         self._ax.plot([0, 1], [0, 1], color=baseline_color, lw=2, linestyle="--")
         self._ax.set_xlim([0.0, 1.0])
         self._ax.set_ylim([0.0, 1.05])

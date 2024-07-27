@@ -4,6 +4,28 @@ import matplotlib.axes as axes
 from matplotlib.colors import Colormap
 
 
+class ConfusionMatrixPlotConfig:
+    def __init__(
+        self,
+        cmap: Colormap,
+        title: str,
+        xaxis_name: str,
+        yaxis_name: str,
+    ):
+        self.cmap = cmap
+        self.title = title
+        self.xaxis_name = xaxis_name
+        self.yaxis_name = yaxis_name
+
+
+DEFAULT_CMP_CONFIG = ConfusionMatrixPlotConfig(
+    cmap=plt.cm.Blues,
+    title="Confusion Matrix",
+    xaxis_name="Predicted",
+    yaxis_name="True",
+)
+
+
 class ConfusionMatrixPlotter:
     """
     Creates a plotting object to visualize a Confusion Matrix.
@@ -21,21 +43,15 @@ class ConfusionMatrixPlotter:
         self,
         ax: axes.Axes,
         conf_matrix: np.ndarray,
-        class_labels: list[str] = None,
-        accuracy: float = None,
+        class_labels: list[str] | None = None,
+        accuracy: float | None = None,
     ):
         self._ax = ax
         self._conf_matrix = conf_matrix
         self._class_labels = class_labels
         self._accuracy = accuracy
 
-    def plot(
-        self,
-        cmap: Colormap = plt.cm.Blues,
-        title: str = "Confusion Matrix",
-        xaxis_name: str = "True",
-        yaxis_name: str = "Predicted",
-    ) -> axes.Axes:
+    def plot(self, config=DEFAULT_CMP_CONFIG) -> axes.Axes:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -48,15 +64,15 @@ class ConfusionMatrixPlotter:
 
         """
 
-        self._ax.matshow(self._conf_matrix, cmap=cmap)
-        self._ax.set_xlabel(xaxis_name)
-        self._ax.set_ylabel(yaxis_name)
-        self._ax.set_title(title)
+        self._ax.matshow(self._conf_matrix, cmap=config.cmap)
+        self._ax.set_xlabel(config.xaxis_name)
+        self._ax.set_ylabel(config.yaxis_name)
+        self._ax.set_title(config.title)
         self._ax.tick_params(
             axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
         )
 
-        if self._class_labels:
+        if self._class_labels is not None:
             self._ax.set_xticks(
                 np.arange(len(self._class_labels)), labels=self._class_labels
             )
@@ -78,7 +94,7 @@ class ConfusionMatrixPlotter:
         if self._accuracy:
             self._ax.annotate(
                 text="Accuracy: %0.2f" % self._accuracy,
-                xy=(350, 18),
+                xy=(75, 13),
                 xycoords="figure pixels",
             )
 
