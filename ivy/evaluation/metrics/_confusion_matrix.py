@@ -8,23 +8,14 @@ from ..plots.confusion_matrix import (
     ConfusionMatrixPlotter,
     DEFAULT_CMP_CONFIG,
 )
-from ...utils import Result
-
-
-def _is_valid_input_dimensions(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
-    return truth_array.ndim == 1 and pred_array.ndim == 1
-
-
-def _is_valid_input_values(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
-    print(len(np.setdiff1d(truth_array, pred_array)))
-    return len(np.setdiff1d(truth_array, pred_array)) == 0
+from ...utils import Option, Result
 
 
 class ConfusionMatrix:
     def __init__(
         self,
         confusion_matrix: np.ndarray,
-        class_labels: np.ndarray | list = None,
+        class_labels: np.ndarray | list | None = None,
     ):
         self._confusion_matrix = confusion_matrix
         self._class_labels = class_labels
@@ -34,7 +25,7 @@ class ConfusionMatrix:
         cls,
         y: np.ndarray,
         y_pred: np.ndarray,
-        class_labels: np.ndarray | list = None,
+        class_labels: np.ndarray | list | None = None,
     ) -> Result[Self, Exception]:
         if not _is_valid_input_dimensions(y, y_pred):
             return Result.err(IncompatibleDimsException(y.shape, y_pred.shape))
@@ -54,26 +45,23 @@ class ConfusionMatrix:
     def plot(
         self,
         config: ConfusionMatrixPlotConfig = DEFAULT_CMP_CONFIG,
-        show_accuracy: bool = True,
+        # show_accuracy: bool = True,
     ) -> Result[Axes, Exception]:
         _, ax = plt.subplots()
+        # accuracy: float = self._accuracy() if show_accuracy else None
 
-        if self._confusion_matrix is None:
-            return Result.err(Exception("Cannot find Confusion Matrix in memory."))
+        return ConfusionMatrixPlotter(
+            ax,
+            self._confusion_matrix,
+            self._class_labels,
+        ).plot(config)
 
-        accuracy: float = self._accuracy() if show_accuracy else None
+    def as_array(self) -> Option[np.ndarray]:
+        if self._confusion_matrix is not None:
+            return Option.some(self._confusion_matrix)
+        return Option.none()
 
-        return Result.ok(
-            ConfusionMatrixPlotter(
-                ax, self._confusion_matrix, self._class_labels, accuracy
-            ).plot(config)
-        )
-
-    def _compute(
-        self,
-        truth_array: np.ndarray,
-        pred_array: np.ndarray,
-    ) -> Self:
+    def _compute(self, truth_array: np.ndarray, pred_array: np.ndarray) -> Self:
 
         class_count: int = len(self._class_labels)
         self._confusion_matrix: np.ndarray = np.zeros(
@@ -85,14 +73,14 @@ class ConfusionMatrix:
 
         return self
 
-    def _accuracy(self) -> float:
-        class_count: int = len(self._class_labels)
-        pos_pred_count = 0.0
+    # def _accuracy(self) -> float:
+    #     class_count: int = len(self._class_labels)
+    #     pos_pred_count = 0.0
 
-        for i in range(class_count):
-            pos_pred_count += self._confusion_matrix[i, i]
+    #     for i in range(class_count):
+    #         pos_pred_count += self._confusion_matrix[i, i]
 
-        return (pos_pred_count / self._confusion_matrix.sum()) * 100
+    #     return (pos_pred_count / self._confusion_matrix.sum()) * 100
 
 
 class IncompatibleDimsException(Exception):
@@ -109,3 +97,12 @@ class IncompatibleValuesException(Exception):
             "Incompatible Values: Input arrays do not have the same unique values."
         )
         super(IncompatibleValuesException, self).__init__(self.message)
+
+
+def _is_valid_input_dimensions(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
+    return truth_array.ndim == 1 and pred_array.ndim == 1
+
+
+def _is_valid_input_values(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
+    print(len(np.setdiff1d(truth_array, pred_array)))
+    return len(np.setdiff1d(truth_array, pred_array)) == 0

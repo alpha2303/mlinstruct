@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import matplotlib.axes as axes
 from matplotlib.colors import Colormap
+from ...utils import Result
 
 
 class ConfusionMatrixPlotConfig:
@@ -36,7 +37,6 @@ class ConfusionMatrixPlotter:
 
     Optional Arguments:
     class_labels: `list[str]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
-    accuracy: `float` - Accuracy value obtained from the confusion matrix provided. Default = `None`
     """
 
     def __init__(
@@ -44,14 +44,14 @@ class ConfusionMatrixPlotter:
         ax: axes.Axes,
         conf_matrix: np.ndarray,
         class_labels: list[str] | None = None,
-        accuracy: float | None = None,
+        # accuracy: float | None = None,
     ):
         self._ax = ax
         self._conf_matrix = conf_matrix
         self._class_labels = class_labels
-        self._accuracy = accuracy
+        # self._accuracy = accuracy
 
-    def plot(self, config=DEFAULT_CMP_CONFIG) -> axes.Axes:
+    def plot(self, config=DEFAULT_CMP_CONFIG) -> Result[axes.Axes, Exception]:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -63,6 +63,26 @@ class ConfusionMatrixPlotter:
         yaxis_name: `str` - Label of the Y axis of the plot. Default = `"Predicted"`
 
         """
+
+        if self._conf_matrix is None:
+            return Result.err(Exception("Confusion Matrix not initialized."))
+
+        if self._conf_matrix.shape[0] != self._conf_matrix.shape[1]:
+            return Result.err(
+                Exception(
+                    f"Invalid dimensions: {self._conf_matrix.shape}. Square matrix required."
+                )
+            )
+
+        if self._class_labels and len(self._class_labels) != self._conf_matrix.shape[0]:
+            return Result.err(
+                Exception(
+                    f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
+                )
+            )
+
+        if self._class_labels is None:
+            self._class_labels = np.arange(self._conf_matrix.shape[0])
 
         self._ax.matshow(self._conf_matrix, cmap=config.cmap)
         self._ax.set_xlabel(config.xaxis_name)
@@ -91,12 +111,14 @@ class ConfusionMatrixPlotter:
                     color=self._get_text_color(i, j),
                 )
 
-        if self._accuracy:
-            self._ax.annotate(
-                text="Accuracy: %0.2f" % self._accuracy,
-                xy=(75, 13),
-                xycoords="figure pixels",
-            )
+        self._ax.figure.subplots_adjust(right=1.0)
+
+        # if self._accuracy:
+        #     self._ax.annotate(
+        #         text="Accuracy: %0.2f" % self._accuracy,
+        #         xy=(75, 13),
+        #         xycoords="figure pixels",
+        #     )
 
         return self._ax
 
