@@ -41,6 +41,11 @@ class ConfusionMatrix:
         cm = cls(None, class_labels)
 
         return Result.ok(cm._compute(y, y_pred))
+    
+    def as_array(self) -> Option[np.ndarray]:
+        if self._confusion_matrix is not None:
+            return Option.some(self._confusion_matrix)
+        return Option.none()
 
     def plot(
         self,
@@ -55,11 +60,6 @@ class ConfusionMatrix:
             self._confusion_matrix,
             self._class_labels,
         ).plot(config)
-
-    def as_array(self) -> Option[np.ndarray]:
-        if self._confusion_matrix is not None:
-            return Option.some(self._confusion_matrix)
-        return Option.none()
 
     def _compute(self, truth_array: np.ndarray, pred_array: np.ndarray) -> Self:
 
