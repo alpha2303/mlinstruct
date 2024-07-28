@@ -14,7 +14,7 @@ class Result[T, E: Exception]:
         return cls(err=err)
     
     def is_err(self) -> bool:
-        return self._err != None
+        return self._err is not None
     
     def unwrap(self) -> T | E:
         if self.is_err():

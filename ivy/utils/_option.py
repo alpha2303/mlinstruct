@@ -17,4 +17,4 @@ class Option[T]:
         return self._value
     
     def is_none(self) -> bool:
-        return self._value == None
+        return self._value is None
