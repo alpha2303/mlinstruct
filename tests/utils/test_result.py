@@ -6,9 +6,10 @@ from unittest import TestCase
 class TestResult(TestCase):
     "Testing Class for Result type class"
 
-    def setUp(self) -> None:
-        self.result_ok = Result[int, ZeroDivisionError](5)
-        self.result_err = Result[int, ZeroDivisionError](err=ZeroDivisionError())
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.result_ok = Result[int, ZeroDivisionError](5)
+        cls.result_err = Result[int, ZeroDivisionError](err=ZeroDivisionError())
 
     def test_result_ok_unwrap(self) -> None:
         self.assertEqual(self.result_ok.unwrap(), 5)

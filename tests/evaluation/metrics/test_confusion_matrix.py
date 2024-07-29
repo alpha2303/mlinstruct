@@ -10,24 +10,24 @@ from ivy.utils import Result
 
 
 class TestConfusionMatrix(TestCase):
-    def setUp(self) -> None:
-        # self.class_labels: list[str] = ["Car", "Bike", "Scooter"]
-        self.y: np.ndarray = np.array(
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.y: np.ndarray = np.array(
             [2, 2, 0, 0, 1, 1, 2, 0, 0, 0, 1, 1, 1, 1, 0, 1, 2, 2, 0, 0, 2, 2, 0, 2, 0, 0, 0, 2, 0, 1, 0, 2, 2, 1, 0, 0, 0, 0, 2, 1, 1, 2, 2, 2, 1, 0, 1, 0, 0, 0]
         )
-        self.y_pred: np.ndarray = np.array(
+        cls.y_pred: np.ndarray = np.array(
             [2, 1, 1, 1, 1, 2, 2, 1, 2, 0, 2, 0, 1, 0, 2, 0, 1, 1, 0, 0, 2, 2, 0, 0, 1, 2, 2, 2, 0, 1, 2, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 1, 0, 0, 2, 0, 1, 1, 0, 2]
         )
-        self.y_pred_invalid_dims: np.ndarray = np.array(
+        cls.y_pred_invalid_dims: np.ndarray = np.array(
             [
                 [2, 1, 1, 1, 1, 2, 2, 1, 2, 0, 2, 0, 1, 0, 2, 0, 1, 1, 0, 0, 2, 2, 0, 0, 1, 2, 2, 2, 0, 1, 2, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 1, 0, 0, 2, 0, 1, 1, 0, 2],
                 [2, 1, 1, 1, 1, 2, 2, 1, 2, 0, 2, 0, 1, 0, 2, 0, 1, 1, 0, 0, 2, 2, 0, 0, 1, 2, 2, 2, 0, 1, 2, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 1, 0, 0, 2, 0, 1, 1, 0, 2]
             ]
         )
-        self.y_pred_invalid_values: np.ndarray = np.array(
+        cls.y_pred_invalid_values: np.ndarray = np.array(
             [3, 1, 1, 1, 1, 2, 2, 1, 2, 0, 2, 0, 1, 0, 2, 0, 1, 1, 0, 0, 2, 2, 0, 0, 1, 2, 2, 2, 0, 1, 2, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 1, 0, 0, 2, 0, 1, 1, 0, 2]
         )
-        self.confusion_matrix: np.ndarray = np.array([[8, 6, 8], [4, 4, 5], [4, 4, 7]])
+        cls.confusion_matrix: np.ndarray = np.array([[8, 6, 8], [4, 4, 5], [4, 4, 7]])
 
     def test_get_valid_cm_as_array(self) -> None:
         cm: ConfusionMatrix = ConfusionMatrix(self.confusion_matrix)

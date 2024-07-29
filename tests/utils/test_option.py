@@ -6,9 +6,10 @@ from unittest import TestCase
 class TestOption(TestCase):
     "Testing Class for Option type class"
 
-    def setUp(self) -> None:
-        self.option_some_int = Option[int](3)
-        self.option_none = Option[int](None)
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.option_some_int = Option[int](3)
+        cls.option_none = Option[int](None)
 
     def test_option_some_unwrap(self) -> None:
         self.assertEqual(self.option_some_int.unwrap(), 3)
