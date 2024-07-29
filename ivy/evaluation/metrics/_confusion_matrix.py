@@ -11,21 +11,35 @@ from ..plots.confusion_matrix import (
 from ...utils import Option, Result
 
 
+def _is_valid_input_dimensions(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
+    return truth_array.ndim == 1 and np.array_equal(truth_array.shape, pred_array.shape)
+
+
+def _is_valid_input_values(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
+    return truth_array.shape[0] > 0 and len(np.setxor1d(truth_array, pred_array)) == 0
+
+
+def _compute_confusion_matrix(
+    truth_array: np.ndarray, pred_array: np.ndarray, class_count: int
+) -> np.ndarray:
+    confusion_matrix: np.ndarray = np.zeros((class_count, class_count)).astype(int)
+
+    for i in range(len(truth_array)):
+        confusion_matrix[truth_array[i], pred_array[i]] += 1
+
+    return confusion_matrix
+
+
 class ConfusionMatrix:
     def __init__(
         self,
         confusion_matrix: np.ndarray,
-        class_labels: np.ndarray | list | None = None,
     ):
         self._confusion_matrix = confusion_matrix
-        self._class_labels = class_labels
 
     @classmethod
     def from_predictions(
-        cls,
-        y: np.ndarray,
-        y_pred: np.ndarray,
-        class_labels: np.ndarray | list | None = None,
+        cls, y: np.ndarray, y_pred: np.ndarray
     ) -> Result[Self, Exception]:
         if not _is_valid_input_dimensions(y, y_pred):
             return Result.err(IncompatibleDimsException(y.shape, y_pred.shape))
@@ -35,13 +49,12 @@ class ConfusionMatrix:
 
         conf_matrix_size = len(np.unique(y))
 
-        if class_labels is None:
-            class_labels = np.arange(conf_matrix_size)
+        try:
+            confusion_matrix = _compute_confusion_matrix(y, y_pred, conf_matrix_size)
+            return Result.ok(cls(confusion_matrix))
+        except Exception as e:
+            return Result.err(e)
 
-        cm = cls(None, class_labels)
-
-        return Result.ok(cm._compute(y, y_pred))
-    
     def as_array(self) -> Option[np.ndarray]:
         if self._confusion_matrix is not None:
             return Option.some(self._confusion_matrix)
@@ -49,6 +62,7 @@ class ConfusionMatrix:
 
     def plot(
         self,
+        class_labels: Option[list] = Option.none(),
         config: ConfusionMatrixPlotConfig = DEFAULT_CMP_CONFIG,
         # show_accuracy: bool = True,
     ) -> Result[Axes, Exception]:
@@ -58,20 +72,8 @@ class ConfusionMatrix:
         return ConfusionMatrixPlotter(
             ax,
             self._confusion_matrix,
-            self._class_labels,
+            class_labels,
         ).plot(config)
-
-    def _compute(self, truth_array: np.ndarray, pred_array: np.ndarray) -> Self:
-
-        class_count: int = len(self._class_labels)
-        self._confusion_matrix: np.ndarray = np.zeros(
-            (class_count, class_count)
-        ).astype(int)
-
-        for i in range(len(truth_array)):
-            self._confusion_matrix[truth_array[i], pred_array[i]] += 1
-
-        return self
 
     # def _accuracy(self) -> float:
     #     class_count: int = len(self._class_labels)
@@ -85,24 +87,17 @@ class ConfusionMatrix:
 
 class IncompatibleDimsException(Exception):
     def __init__(self, shape_1: tuple[int], shape_2: tuple[int]):
-        self.message = f"Incompatible Dimensions: {shape_1}, {shape_2}. Size and shape of input arrays must match."
-        super(IncompatibleDimsException, self).__init__(self.message)
+        self.message: str = (
+            f"Incompatible Dimensions: {shape_1}, {shape_2}. Size and shape of input arrays must match."
+        )
+        super().__init__(self.message)
 
 
 class IncompatibleValuesException(Exception):
     def __init__(
         self,
     ):
-        self.message = (
-            "Incompatible Values: Input arrays do not have the same unique values."
+        self.message: str = (
+            "Incompatible Values: Input arrays may be empty or do not have the same unique values."
         )
-        super(IncompatibleValuesException, self).__init__(self.message)
-
-
-def _is_valid_input_dimensions(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
-    return truth_array.ndim == 1 and pred_array.ndim == 1
-
-
-def _is_valid_input_values(truth_array: np.ndarray, pred_array: np.ndarray) -> bool:
-    print(len(np.setdiff1d(truth_array, pred_array)))
-    return len(np.setdiff1d(truth_array, pred_array)) == 0
+        super().__init__(self.message)

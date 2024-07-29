@@ -2,7 +2,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import matplotlib.axes as axes
 from matplotlib.colors import Colormap
-from ...utils import Result
+
+from ...utils import Option, Result
 
 
 class ConfusionMatrixPlotConfig:
@@ -36,19 +37,22 @@ class ConfusionMatrixPlotter:
     conf_matrix: `numpy.ndarray` - NumPy array representing the input confusion matrix.
 
     Optional Arguments:
-    class_labels: `list[str]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
+    class_labels: `Option[list]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
     """
 
     def __init__(
         self,
         ax: axes.Axes,
         conf_matrix: np.ndarray,
-        class_labels: list[str] | None = None,
+        class_labels: Option[list] = Option.none(),
         # accuracy: float | None = None,
     ):
-        self._ax = ax
-        self._conf_matrix = conf_matrix
-        self._class_labels = class_labels
+        self._ax: axes.Axes = ax
+        self._conf_matrix: np.ndarray = conf_matrix
+        self._class_labels: np.ndarray | list = class_labels.unwrap()
+        if class_labels.is_none():
+            self._class_labels = np.arange(self._conf_matrix.shape[0])
+            
         # self._accuracy = accuracy
 
     def plot(self, config=DEFAULT_CMP_CONFIG) -> Result[axes.Axes, Exception]:
@@ -74,15 +78,12 @@ class ConfusionMatrixPlotter:
                 )
             )
 
-        if self._class_labels and len(self._class_labels) != self._conf_matrix.shape[0]:
+        if len(self._class_labels) != self._conf_matrix.shape[0]:
             return Result.err(
                 Exception(
                     f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
                 )
             )
-
-        if self._class_labels is None:
-            self._class_labels = np.arange(self._conf_matrix.shape[0])
 
         self._ax.matshow(self._conf_matrix, cmap=config.cmap)
         self._ax.set_xlabel(config.xaxis_name)
