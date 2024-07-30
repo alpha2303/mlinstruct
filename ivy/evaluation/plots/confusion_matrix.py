@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-import matplotlib.axes as axes
+from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
 from ...utils import Option, Result
@@ -42,12 +42,12 @@ class ConfusionMatrixPlotter:
 
     def __init__(
         self,
-        ax: axes.Axes,
+        ax: Axes,
         conf_matrix: np.ndarray,
         class_labels: Option[list] = Option.none(),
         # accuracy: float | None = None,
     ):
-        self._ax: axes.Axes = ax
+        self._ax: Axes = ax
         self._conf_matrix: np.ndarray = conf_matrix
         self._class_labels: np.ndarray | list = class_labels.unwrap()
         if class_labels.is_none():
@@ -55,7 +55,7 @@ class ConfusionMatrixPlotter:
             
         # self._accuracy = accuracy
 
-    def plot(self, config=DEFAULT_CMP_CONFIG) -> Result[axes.Axes, Exception]:
+    def plot(self, config=DEFAULT_CMP_CONFIG) -> Result[Axes, Exception]:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -121,7 +121,7 @@ class ConfusionMatrixPlotter:
         #         xycoords="figure pixels",
         #     )
 
-        return self._ax
+        return Result.ok(self._ax)
 
     def _get_text_color(self, row_idx, col_idx):
         max_val = self._conf_matrix.max()
