@@ -1,31 +1,32 @@
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
 from ...utils import Option, Result
 
+DEFAULT_CMAP = plt.cm.Blues
 
-class ConfusionMatrixPlotConfig:
-    def __init__(
-        self,
-        cmap: Colormap,
-        title: str,
-        xaxis_name: str,
-        yaxis_name: str,
-    ):
-        self.cmap = cmap
-        self.title = title
-        self.xaxis_name = xaxis_name
-        self.yaxis_name = yaxis_name
+# class ConfusionMatrixPlotConfig:
+#     def __init__(
+#         self,
+#         cmap: Colormap,
+#         title: str,
+#         xaxis_name: str,
+#         yaxis_name: str,
+#     ):
+#         self.cmap = cmap
+#         self.title = title
+#         self.xaxis_name = xaxis_name
+#         self.yaxis_name = yaxis_name
 
 
-DEFAULT_CMP_CONFIG = ConfusionMatrixPlotConfig(
-    cmap=plt.cm.Blues,
-    title="Confusion Matrix",
-    xaxis_name="Predicted",
-    yaxis_name="True",
-)
+# DEFAULT_CMP_CONFIG = ConfusionMatrixPlotConfig(
+#     cmap=plt.cm.Blues,
+#     title="Confusion Matrix",
+#     xaxis_name="Predicted",
+#     yaxis_name="True",
+# )
 
 
 class ConfusionMatrixPlotter:
@@ -45,17 +46,20 @@ class ConfusionMatrixPlotter:
         ax: Axes,
         conf_matrix: np.ndarray,
         class_labels: Option[list] = Option.none(),
-        # accuracy: float | None = None,
     ):
         self._ax: Axes = ax
         self._conf_matrix: np.ndarray = conf_matrix
         self._class_labels: np.ndarray | list = class_labels.unwrap()
         if class_labels.is_none():
             self._class_labels = np.arange(self._conf_matrix.shape[0])
-            
-        # self._accuracy = accuracy
 
-    def plot(self, config=DEFAULT_CMP_CONFIG) -> Result[Axes, Exception]:
+    def plot(
+        self,
+        title: str = "Confusion Matrix",
+        xaxis_name: str = "Predicted",
+        yaxis_name: str = "True",
+        **kwargs,
+    ) -> Result[Axes, Exception]:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -84,11 +88,11 @@ class ConfusionMatrixPlotter:
                     f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
                 )
             )
-
-        self._ax.matshow(self._conf_matrix, cmap=config.cmap)
-        self._ax.set_xlabel(config.xaxis_name)
-        self._ax.set_ylabel(config.yaxis_name)
-        self._ax.set_title(config.title)
+        cmap: Colormap = kwargs.get(cmap) if "cmap" in kwargs else DEFAULT_CMAP
+        self._ax.matshow(self._conf_matrix, cmap=cmap)
+        self._ax.set_xlabel(xaxis_name)
+        self._ax.set_ylabel(yaxis_name)
+        self._ax.set_title(title)
         self._ax.tick_params(
             axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
         )
@@ -113,13 +117,6 @@ class ConfusionMatrixPlotter:
                 )
 
         self._ax.figure.subplots_adjust(right=1.0)
-
-        # if self._accuracy:
-        #     self._ax.annotate(
-        #         text="Accuracy: %0.2f" % self._accuracy,
-        #         xy=(75, 13),
-        #         xycoords="figure pixels",
-        #     )
 
         return Result.ok(self._ax)
 

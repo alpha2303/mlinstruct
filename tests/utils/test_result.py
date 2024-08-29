@@ -1,4 +1,4 @@
-from ivy.utils import Result
+from mlinstruct.utils import Result
 
 from unittest import TestCase
 

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ivy"
+name = "mlinstruct"
 
 version = "0.1.0"
 description = "Python library for managing ML model training instances and evaluation graph generation"
@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/alpha2303/ivy-torch"
 
-packages = [{include = "ivy", from = "."}]
+packages = [{include = "mlinstruct", from = "."}]
 
 [tool.poetry.dependencies]
 python = "^3.11, <4.0"

@@ -1,12 +1,12 @@
 import numpy as np
 from unittest import TestCase
 
-from ivy.evaluation.metrics import (
+from mlinstruct.evaluation.metrics import (
     ConfusionMatrix,
     IncompatibleDimsException,
     IncompatibleValuesException,
 )
-from ivy.utils import Result
+from mlinstruct.utils import Result
 
 
 class TestConfusionMatrix(TestCase):
