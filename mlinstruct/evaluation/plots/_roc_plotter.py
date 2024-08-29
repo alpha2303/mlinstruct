@@ -29,14 +29,15 @@ class ROCPlotter:
 
     def plot(
         self,
-        curve_color: str = "darkorange",
-        baseline_color: str = "navy",
         title: str = "Receiver operating characteristic (ROC) curve",
-        plot_label: str = "ROC Curve",
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
+        curve_color: str = "darkorange",
+        baseline_color: str = "navy",
+        plot_label: str = "ROC Curve",
         add_legend: bool = True,
         legend_loc: str = "lower right",
+        **kwargs
     ) -> axes.Axes:
         """
         plot() -> Generates the ROC Curve on `matplotlib.axes.Axes` object provided.

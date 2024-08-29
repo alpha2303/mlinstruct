@@ -1,4 +1,3 @@
-from ._confusion_matrix import ConfusionMatrix, IncompatibleDimsException, IncompatibleValuesException
+from . import classification
 
-
-__all__ = ["ConfusionMatrix", "IncompatibleDimsException", "IncompatibleValuesException"]
+__all__ = ["classification"]
