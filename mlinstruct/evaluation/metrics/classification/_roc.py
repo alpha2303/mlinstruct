@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, roc_auc_score
 from matplotlib.axes import Axes
 from typing import Self
 
@@ -19,7 +19,7 @@ def _compute_roc_curve(
 
 
 def _compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
-    return np.trapz(fpr, tpr)
+    return np.trapz(tpr, fpr)
 
 
 class ROC:
