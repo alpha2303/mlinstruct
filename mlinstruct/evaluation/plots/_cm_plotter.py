@@ -1,7 +1,32 @@
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.axes as axes
+from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
+
+from ...utils import Option, Result
+
+DEFAULT_CMAP = plt.cm.Blues
+
+# class ConfusionMatrixPlotConfig:
+#     def __init__(
+#         self,
+#         cmap: Colormap,
+#         title: str,
+#         xaxis_name: str,
+#         yaxis_name: str,
+#     ):
+#         self.cmap = cmap
+#         self.title = title
+#         self.xaxis_name = xaxis_name
+#         self.yaxis_name = yaxis_name
+
+
+# DEFAULT_CMP_CONFIG = ConfusionMatrixPlotConfig(
+#     cmap=plt.cm.Blues,
+#     title="Confusion Matrix",
+#     xaxis_name="Predicted",
+#     yaxis_name="True",
+# )
 
 
 class ConfusionMatrixPlotter:
@@ -13,29 +38,28 @@ class ConfusionMatrixPlotter:
     conf_matrix: `numpy.ndarray` - NumPy array representing the input confusion matrix.
 
     Optional Arguments:
-    class_labels: `list[str]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
-    accuracy: `float` - Accuracy value obtained from the confusion matrix provided. Default = `None`
+    class_labels: `Option[list]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
     """
 
     def __init__(
         self,
-        ax: axes.Axes,
+        ax: Axes,
         conf_matrix: np.ndarray,
-        class_labels: list[str] = None,
-        accuracy: float = None,
+        class_labels: Option[list] = Option.none(),
     ):
-        self._ax = ax
-        self._conf_matrix = conf_matrix
-        self._class_labels = class_labels
-        self._accuracy = accuracy
+        self._ax: Axes = ax
+        self._conf_matrix: np.ndarray = conf_matrix
+        self._class_labels: np.ndarray | list = class_labels.unwrap()
+        if class_labels.is_none():
+            self._class_labels = np.arange(self._conf_matrix.shape[0])
 
     def plot(
         self,
-        cmap: Colormap = plt.cm.Blues,
         title: str = "Confusion Matrix",
-        xaxis_name: str = "True",
-        yaxis_name: str = "Predicted",
-    ) -> axes.Axes:
+        xaxis_name: str = "Predicted",
+        yaxis_name: str = "True",
+        **kwargs,
+    ) -> Result[Axes, Exception]:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -48,6 +72,23 @@ class ConfusionMatrixPlotter:
 
         """
 
+        if self._conf_matrix is None:
+            return Result.err(Exception("Confusion Matrix not initialized."))
+
+        if self._conf_matrix.shape[0] != self._conf_matrix.shape[1]:
+            return Result.err(
+                Exception(
+                    f"Invalid dimensions: {self._conf_matrix.shape}. Square matrix required."
+                )
+            )
+
+        if len(self._class_labels) != self._conf_matrix.shape[0]:
+            return Result.err(
+                Exception(
+                    f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
+                )
+            )
+        cmap: Colormap = kwargs.get(cmap) if "cmap" in kwargs else DEFAULT_CMAP
         self._ax.matshow(self._conf_matrix, cmap=cmap)
         self._ax.set_xlabel(xaxis_name)
         self._ax.set_ylabel(yaxis_name)
@@ -56,7 +97,7 @@ class ConfusionMatrixPlotter:
             axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
         )
 
-        if self._class_labels:
+        if self._class_labels is not None:
             self._ax.set_xticks(
                 np.arange(len(self._class_labels)), labels=self._class_labels
             )
@@ -75,14 +116,9 @@ class ConfusionMatrixPlotter:
                     color=self._get_text_color(i, j),
                 )
 
-        if self._accuracy:
-            self._ax.annotate(
-                text="Accuracy: %0.2f" % self._accuracy,
-                xy=(350, 18),
-                xycoords="figure pixels",
-            )
+        self._ax.figure.subplots_adjust(right=1.0)
 
-        return self._ax
+        return Result.ok(self._ax)
 
     def _get_text_color(self, row_idx, col_idx):
         max_val = self._conf_matrix.max()

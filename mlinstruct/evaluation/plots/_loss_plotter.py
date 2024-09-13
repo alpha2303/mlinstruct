@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.axes as axes
 
 
-class TrainingLossPlotter:
+class LossPlotter:
     """
-    Creates a plotting object to visualize training loss trends.
+    Creates a plotting object to visualize loss trends during training.
     Validation loss information can also be included for comparison.
 
     Required Arguments:

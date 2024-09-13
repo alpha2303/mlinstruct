@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ivy"
+name = "mlinstruct"
 
 version = "0.1.0"
 description = "Python library for managing ML model training instances and evaluation graph generation"
@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/alpha2303/ivy-torch"
 
-packages = [{include = "ivy", from = "."}]
+packages = [{include = "mlinstruct", from = "."}]
 
 [tool.poetry.dependencies]
 python = "^3.11, <4.0"
@@ -16,6 +16,7 @@ numpy = "^1.26.2"
 matplotlib = "^3.6.3"
 torch = "^2.4.0"
 torchvision = "^0.19.0"
+scikit-learn = "^1.5.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.1"
