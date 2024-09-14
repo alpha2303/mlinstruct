@@ -1,5 +1,5 @@
 from ._extension import BaseExtension
 from ._early_stopper import EarlyStopper
-from ._checkpoints import BaseCheckpoint
+from ._checkpoints import BaseCheckpoint, TorchCheckpoint
 
-__all__ = ["BaseExtension", "EarlyStopper", "BaseCheckpoint"]
+__all__ = ["BaseExtension", "EarlyStopper", "BaseCheckpoint", "TorchCheckpoint"]
