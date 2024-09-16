@@ -2,10 +2,13 @@ from mlinstruct.utils import Result
 
 
 class BaseExtension:
-    key: str
+    _key: str
 
     def __init__(self, key, **kwargs) -> None:
-        self.key = key
+        self._key = key
+    
+    def getKey(self) -> str:
+        return self._key
 
     def execute(self, **kwargs) -> Result[bool, Exception]:
         raise NotImplementedError()

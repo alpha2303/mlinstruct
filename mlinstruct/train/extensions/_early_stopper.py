@@ -1,6 +1,6 @@
 import numpy as np
-from mlinstruct.train.extensions import BaseExtension
-from mlinstruct.utils import Result
+from ._base_extension import BaseExtension
+from ...utils import Result
 
 
 class EarlyStopper(BaseExtension):

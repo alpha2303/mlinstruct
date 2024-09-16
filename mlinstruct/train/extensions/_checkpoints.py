@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 import torch
 
-from mlinstruct.train.extensions import BaseExtension
-from mlinstruct.utils import Result, Option, check_params
+from ._base_extension import BaseExtension
+from ...utils import Result, Option, check_params
 
 
 class BaseCheckpoint(BaseExtension):
@@ -14,16 +14,14 @@ class BaseCheckpoint(BaseExtension):
         self.__init__(key="Checkpoint")
 
     def execute(self, **kwargs) -> Result[bool, Exception]:
-        check_result: Result[bool, Exception] = check_params(kwargs, {"model": Any})
-        if check_result.is_err():
-            return check_result
+        result: Result[bool, Exception] = check_params(kwargs, {"model": Any})
+        if result.is_err():
+            return result
 
         if "is_best" in kwargs and kwargs.get("is_best"):
-            save_result: Result[bool, Exception] = self.save(
-                model=kwargs.get("model"), name="best" + self._file_ext
-            )
-            if save_result.is_err():
-                return save_result
+            result = self.save(model=kwargs.get("model"), name="best" + self._file_ext)
+            if result.is_err():
+                return result
 
         return self.save(kwargs.get("model"), name="last" + self._file_ext)
 
@@ -36,7 +34,7 @@ class TorchCheckpoint(BaseCheckpoint):
         super().__init__(save_folder_path)
 
     def save(self, **kwargs) -> Result[bool, Exception]:
-        check_result = check_params(
+        result: Result[bool, Exception] = check_params(
             kwargs,
             {
                 "model": torch.nn.Module,
@@ -46,8 +44,8 @@ class TorchCheckpoint(BaseCheckpoint):
                 "loss": float,
             },
         )
-        if check_result.is_err():
-            return check_result
+        if result.is_err():
+            return result
 
         try:
             torch.save(
@@ -59,5 +57,6 @@ class TorchCheckpoint(BaseCheckpoint):
                 },
                 self._save_folder_path.joinpath(kwargs.get("name")),
             )
+            return Result.ok(True)
         except Exception as e:
             return Result.err(e)
