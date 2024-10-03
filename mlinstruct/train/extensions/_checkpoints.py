@@ -14,16 +14,16 @@ class BaseCheckpoint(BaseExtension):
         self.__init__(key="Checkpoint")
 
     def execute(self, **kwargs) -> Result[bool, Exception]:
-        result: Result[bool, Exception] = check_params(kwargs, {"model": Any})
+        result: Result[bool, Exception] = check_params(kwargs, {"model": Any, "is_best": bool})
         if result.is_err():
             return result
 
-        if "is_best" in kwargs and kwargs.get("is_best"):
-            result = self.save(model=kwargs.get("model"), name="best" + self._file_ext)
+        if kwargs.get("is_best"):
+            result = self.save(model=kwargs.get("model"), name="best" + self._file_ext, **kwargs)
             if result.is_err():
                 return result
 
-        return self.save(kwargs.get("model"), name="last" + self._file_ext)
+        return self.save(kwargs.get("model"), name="last" + self._file_ext, **kwargs)
 
     def save(self, **kwargs) -> Result[bool, Exception]:
         return Result.err(NotImplemented())
@@ -55,7 +55,7 @@ class TorchCheckpoint(BaseCheckpoint):
                     "optimizer_state_dict": kwargs.get("optimizer").state_dict(),
                     "loss": kwargs.get("loss"),
                 },
-                self._save_folder_path.joinpath(kwargs.get("name")),
+                self._save_folder_path.joinpath(f'{kwargs.get("name")}.pt'),
             )
             return Result.ok(True)
         except Exception as e:
