@@ -1,5 +1,5 @@
-from ._base_trainer import BaseTrainer
-from ._early_stopper import EarlyStopper
-from ._torch_trainer import TorchTrainer
+from . import model_proxy
+from . import trainer
+from . import utils
 
-__all__ = ["BaseTrainer", "EarlyStopper", "TorchTrainer"]
+__all__ = ["model_proxy", "trainer", "utils"]
