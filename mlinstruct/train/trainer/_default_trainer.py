@@ -54,17 +54,7 @@ class DefaultTrainer(BaseTrainer):
                 is_best = True
 
             if self._save_checkpoint:
-                if not model_save_path.exists():
-                    model_save_path.mkdir(parents=True)
-
-                if is_best:
-                    self._model_proxy.save_weights(
-                        epoch_index + 1, avg_vloss, model_save_path, "best"
-                    )
-
-                self._model_proxy.save_weights(
-                    epoch_index + 1, avg_vloss, model_save_path, "last"
-                )
+                self._create_checkpoint(epoch_index + 1, model_save_path, avg_vloss, is_best)
 
             if (
                 not self._early_stopper.is_none()
@@ -74,11 +64,24 @@ class DefaultTrainer(BaseTrainer):
                 break
 
         if self._save_checkpoint:
-            print(f"Model saved to {model_save_path.resolve()}")
+            print(f"Model checkpoints saved to {model_save_path.resolve()}")
 
         return (train_loss_list, test_loss_list)
 
     def allow_early_stop(self, patience: float = 5, min_delta: float = 0.0):
         self._early_stopper = Option.some(
             EarlyStopper(patience=patience, min_delta=min_delta)
+        )
+    
+    def _create_checkpoint(self, epoch: int, model_save_path: Path, vloss: float, is_best: bool) -> None:
+        if not model_save_path.exists():
+            model_save_path.mkdir(parents=True)
+
+        if is_best:
+            self._model_proxy.save_weights(
+                epoch, vloss, model_save_path, "best"
+            )
+
+        self._model_proxy.save_weights(
+            epoch + 1, vloss, model_save_path, "last"
         )
