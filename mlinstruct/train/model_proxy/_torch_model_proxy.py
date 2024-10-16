@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Iterable
 
 import torch
+import torchinfo
 
 from ...utils import Option
 from ._base_model_proxy import BaseModelProxy
@@ -17,16 +18,13 @@ class TorchModelProxy(BaseModelProxy):
         self._model = model
         self._optimizer = optimizer
         self._loss_fn = loss_fn
-        self._start_epoch = 0
         self._scheduler: Option[torch.optim.lr_scheduler.LRScheduler] = Option.none()
 
-    def load_weights(self, model_file_path: Path, dirty_start: bool = False) -> None:
+    def load_weights(self, model_file_path: Path) -> None:
         try:
             checkpoint = torch.load(model_file_path)
             self._model.load_state_dict(checkpoint["model_state_dict"])
             self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-            if dirty_start and "epoch" in checkpoint:
-                self._start_epoch = checkpoint["epoch"]
         except Exception as e:
             raise e
 
@@ -42,14 +40,14 @@ class TorchModelProxy(BaseModelProxy):
                 "Model save path does not exist. If you are running the save method directly, ensure that the save path is valid."
             )
 
-        model_object = {
-            "epoch": epoch,
-            "model_state_dict": self._model.state_dict(),
-            "optimizer_state_dict": self._optimizer.state_dict(),
-            "loss": loss,
-        }
-
         try:
+            model_object = {
+                "epoch": epoch,
+                "model_state_dict": self._model.state_dict(),
+                "optimizer_state_dict": self._optimizer.state_dict(),
+                "loss": loss,
+            }
+
             torch.save(model_object, save_folder_path.joinpath(f"{model_name}.pt"))
         except Exception as e:
             raise e
@@ -57,21 +55,17 @@ class TorchModelProxy(BaseModelProxy):
     def set_scheduler(self, scheduler: torch.optim.lr_scheduler.LRScheduler) -> None:
         self._scheduler = Option.some(scheduler)
 
-    def get_start_epoch(self) -> int:
-        return self._start_epoch
-
-    def set_start_epoch(self, epoch: int) -> None:
-        self._start_epoch = epoch
-
     def get_lr(self) -> float:
         return self._optimizer.param_groups[0]["lr"]
 
     def has_scheduler(self) -> None:
         return not self._scheduler.is_none()
-    
+
     def step(self, avg_vloss: float) -> None:
         if self.has_scheduler():
-            if isinstance(self._scheduler.unwrap(), torch.optim.lr_scheduler.ReduceLROnPlateau):
+            if isinstance(
+                self._scheduler.unwrap(), torch.optim.lr_scheduler.ReduceLROnPlateau
+            ):
                 self._scheduler.unwrap().step(avg_vloss)
             else:
                 self._scheduler.unwrap().step()
@@ -107,3 +101,6 @@ class TorchModelProxy(BaseModelProxy):
             raise e
 
         return running_vloss / len(test_data)
+    
+    def summary(self) -> None:
+        print(torchinfo.summary(self._model))

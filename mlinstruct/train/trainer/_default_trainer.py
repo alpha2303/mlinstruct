@@ -28,18 +28,13 @@ class DefaultTrainer(BaseTrainer):
     def train(
         self, train_data: Iterable, test_data: Iterable, n_iter: int
     ) -> tuple[np.ndarray, np.ndarray]:
-        if self._model_proxy.get_start_epoch() > n_iter:
-            raise ValueError(
-                f"Start Epoch ({self._model_proxy.get_start_epoch()}) is greater than iteration count (n_iter = {n_iter}). Disable dirty start if you are loading an existing model with a greater trained epoch."
-            )
-
         best_vloss: float = np.inf
         train_loss_list, test_loss_list = [], []
         model_save_path = self._save_folder_path.joinpath(
             datetime.now().strftime(_TIMESTAMP_FORMAT)
         )
 
-        for epoch_index in range(self._model_proxy.get_start_epoch(), n_iter):
+        for epoch_index in range(0, n_iter):
             avg_loss = self._model_proxy.train_one_epoch(train_data)
 
             avg_vloss = self._model_proxy.validate(test_data)
@@ -78,7 +73,6 @@ class DefaultTrainer(BaseTrainer):
                 print(f"Early stop triggered at epoch: {epoch_index + 1}")
                 break
 
-        self._model_proxy.set_start_epoch(0)
         if self._save_checkpoint:
             print(f"Model saved to {model_save_path.resolve()}")
 

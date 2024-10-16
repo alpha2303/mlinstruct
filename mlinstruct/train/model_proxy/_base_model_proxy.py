@@ -3,18 +3,12 @@ from typing import Iterable
 
 
 class BaseModelProxy:
-    def load_weights(self, model_file_path: Path, dirty_start: bool = False) -> None:
+    def load_weights(self, model_file_path: Path) -> None:
         raise NotImplementedError()
 
     def save_weights(
         self, epoch: int, loss: float, save_folder_path: Path, model_name: str
     ) -> None:
-        raise NotImplementedError()
-
-    def get_start_epoch(self) -> int:
-        raise NotImplementedError()
-
-    def set_start_epoch(self, epoch: int) -> None:
         raise NotImplementedError()
 
     def get_lr(self) -> float:
@@ -30,4 +24,7 @@ class BaseModelProxy:
         raise NotImplementedError()
 
     def validate(self, test_data: Iterable) -> float:
+        raise NotImplementedError()
+    
+    def summary(self) -> None:
         raise NotImplementedError()
