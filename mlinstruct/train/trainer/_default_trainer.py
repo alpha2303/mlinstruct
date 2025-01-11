@@ -1,10 +1,9 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 
-from ...utils import Option
 from ..model_proxy._base_model_proxy import BaseModelProxy
 from ._base_trainer import BaseTrainer
 from ..utils import EarlyStopper
@@ -23,7 +22,7 @@ class DefaultTrainer(BaseTrainer):
         self._model_proxy = model_proxy
         self._save_folder_path = save_folder_path
         self._save_checkpoint: bool = save_checkpoint
-        self._early_stopper: Option[EarlyStopper] = Option.none()
+        self._early_stopper: Optional[EarlyStopper] = None
 
     def train(
         self, train_data: Iterable, test_data: Iterable, n_iter: int
@@ -54,12 +53,11 @@ class DefaultTrainer(BaseTrainer):
                 is_best = True
 
             if self._save_checkpoint:
-                self._create_checkpoint(epoch_index + 1, model_save_path, avg_vloss, is_best)
+                self._create_checkpoint(
+                    epoch_index + 1, model_save_path, avg_vloss, is_best
+                )
 
-            if (
-                not self._early_stopper.is_none()
-                and self._early_stopper.unwrap().early_stop(avg_vloss)
-            ):
+            if self._early_stopper and self._early_stopper.early_stop(avg_vloss):
                 print(f"Early stop triggered at epoch: {epoch_index + 1}")
                 break
 
@@ -69,19 +67,15 @@ class DefaultTrainer(BaseTrainer):
         return (train_loss_list, test_loss_list)
 
     def allow_early_stop(self, patience: float = 5, min_delta: float = 0.0):
-        self._early_stopper = Option.some(
-            EarlyStopper(patience=patience, min_delta=min_delta)
-        )
-    
-    def _create_checkpoint(self, epoch: int, model_save_path: Path, vloss: float, is_best: bool) -> None:
+        self._early_stopper = EarlyStopper(patience=patience, min_delta=min_delta)
+
+    def _create_checkpoint(
+        self, epoch: int, model_save_path: Path, vloss: float, is_best: bool
+    ) -> None:
         if not model_save_path.exists():
             model_save_path.mkdir(parents=True)
 
         if is_best:
-            self._model_proxy.save_weights(
-                epoch, vloss, model_save_path, "best"
-            )
+            self._model_proxy.save_weights(epoch, vloss, model_save_path, "best")
 
-        self._model_proxy.save_weights(
-            epoch + 1, vloss, model_save_path, "last"
-        )
+        self._model_proxy.save_weights(epoch + 1, vloss, model_save_path, "last")

@@ -2,14 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 from matplotlib.axes import Axes
-from typing import Self
+from typing import Self, Optional
 
 from .._metric_utils import (
     MetricUtils,
     IncompatibleDimsException,
 )
 from ...plots import ROCPlotter
-from ....utils import Option, Result
 
 
 def _compute_roc_curve(
@@ -28,7 +27,7 @@ class ROC:
         fpr: np.ndarray,
         tpr: np.ndarray,
         auc: np.ndarray,
-        thresholds: Option[np.ndarray] = Option.none(),
+        thresholds: Optional[np.ndarray] = None,
     ):
         self._fpr = fpr
         self._tpr = tpr
@@ -40,16 +39,16 @@ class ROC:
         cls,
         y: np.ndarray,
         y_pred: np.ndarray,
-    ) -> Result[Self, Exception]:
+    ) -> Self:
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
-            return Result.err(IncompatibleDimsException(y.shape, y_pred.shape))
+            raise IncompatibleDimsException(y.shape, y_pred.shape)
 
         try:
             fpr, tpr, thresholds = _compute_roc_curve(y, y_pred)
             auc = _compute_auc(fpr, tpr)
-            return Result.ok(cls(fpr, tpr, auc, Option.some(thresholds)))
+            return cls(fpr, tpr, auc, thresholds)
         except Exception as e:
-            return Result.err(e)
+            raise e
 
     def plot(
         self,
@@ -57,7 +56,7 @@ class ROC:
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
         **kwargs
-    ) -> Result[Axes, Exception]:
+    ) -> Axes:
         _, ax = plt.subplots()
 
         return ROCPlotter(ax, self._fpr, self._tpr, self._auc).plot(

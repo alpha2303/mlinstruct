@@ -1,16 +1,16 @@
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 import torch
 import torchinfo
 
-from ...utils import Option
 from ._base_model_proxy import BaseModelProxy
 
 
 class TorchModelProxy(BaseModelProxy):
     def __init__(
         self,
+        name: str,
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.modules.loss._Loss,
@@ -18,7 +18,7 @@ class TorchModelProxy(BaseModelProxy):
         self._model = model
         self._optimizer = optimizer
         self._loss_fn = loss_fn
-        self._scheduler: Option[torch.optim.lr_scheduler.LRScheduler] = Option.none()
+        self._scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
 
     def load_weights(self, model_file_path: Path) -> None:
         try:
@@ -53,22 +53,22 @@ class TorchModelProxy(BaseModelProxy):
             raise e
 
     def set_scheduler(self, scheduler: torch.optim.lr_scheduler.LRScheduler) -> None:
-        self._scheduler = Option.some(scheduler)
+        self._scheduler = scheduler
 
     def get_lr(self) -> float:
         return self._optimizer.param_groups[0]["lr"]
 
-    def has_scheduler(self) -> None:
-        return not self._scheduler.is_none()
+    def has_scheduler(self) -> bool:
+        return self._scheduler is None
 
     def step(self, avg_vloss: float) -> None:
         if self.has_scheduler():
             if isinstance(
-                self._scheduler.unwrap(), torch.optim.lr_scheduler.ReduceLROnPlateau
+                self._scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
             ):
-                self._scheduler.unwrap().step(avg_vloss)
+                self._scheduler.step(avg_vloss)
             else:
-                self._scheduler.unwrap().step()
+                self._scheduler.step()
 
     def train_one_epoch(self, trainLoader: Iterable) -> float:
         running_loss = 0.0

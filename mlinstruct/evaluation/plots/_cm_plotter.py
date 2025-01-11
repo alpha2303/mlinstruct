@@ -1,9 +1,9 @@
+from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-from ...utils import Option, Result
 
 DEFAULT_CMAP = plt.cm.Blues
 
@@ -45,12 +45,12 @@ class ConfusionMatrixPlotter:
         self,
         ax: Axes,
         conf_matrix: np.ndarray,
-        class_labels: Option[list] = Option.none(),
+        class_labels: Optional[list] = None,
     ):
         self._ax: Axes = ax
         self._conf_matrix: np.ndarray = conf_matrix
-        self._class_labels: np.ndarray | list = class_labels.unwrap()
-        if class_labels.is_none():
+        self._class_labels: np.ndarray | list = class_labels
+        if not class_labels:
             self._class_labels = np.arange(self._conf_matrix.shape[0])
 
     def plot(
@@ -59,7 +59,7 @@ class ConfusionMatrixPlotter:
         xaxis_name: str = "Predicted",
         yaxis_name: str = "True",
         **kwargs,
-    ) -> Result[Axes, Exception]:
+    ) -> Axes:
         """
         plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
         Arguments follow the options provided by Matplotlib.
@@ -73,21 +73,18 @@ class ConfusionMatrixPlotter:
         """
 
         if self._conf_matrix is None:
-            return Result.err(Exception("Confusion Matrix not initialized."))
+            raise Exception("Confusion Matrix not initialized.")
 
         if self._conf_matrix.shape[0] != self._conf_matrix.shape[1]:
-            return Result.err(
-                Exception(
-                    f"Invalid dimensions: {self._conf_matrix.shape}. Square matrix required."
-                )
+            raise Exception(
+                f"Invalid dimensions: {self._conf_matrix.shape}. Square matrix required."
             )
 
         if len(self._class_labels) != self._conf_matrix.shape[0]:
-            return Result.err(
-                Exception(
-                    f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
-                )
+            raise Exception(
+                f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
             )
+
         cmap: Colormap = kwargs.get(cmap) if "cmap" in kwargs else DEFAULT_CMAP
         self._ax.matshow(self._conf_matrix, cmap=cmap)
         self._ax.set_xlabel(xaxis_name)
@@ -118,9 +115,9 @@ class ConfusionMatrixPlotter:
 
         self._ax.figure.subplots_adjust(right=1.0)
 
-        return Result.ok(self._ax)
+        return self._ax
 
-    def _get_text_color(self, row_idx, col_idx):
+    def _get_text_color(self, row_idx: int, col_idx: int) -> str:
         max_val = self._conf_matrix.max()
         color = "black"
         if max_val > 0 and self._conf_matrix[row_idx, col_idx] / max_val > 0.5:
