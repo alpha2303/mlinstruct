@@ -10,15 +10,15 @@ from ._base_model_proxy import BaseModelProxy
 class TorchModelProxy(BaseModelProxy):
     def __init__(
         self,
-        name: str,
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.modules.loss._Loss,
-    ):
+        scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
+    ) -> None:
         self._model = model
         self._optimizer = optimizer
         self._loss_fn = loss_fn
-        self._scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
+        self._scheduler = scheduler
 
     def load_weights(self, model_file_path: Path) -> None:
         try:
@@ -33,9 +33,9 @@ class TorchModelProxy(BaseModelProxy):
         return True
 
     def save_weights(
-        self, epoch: int, loss: float, save_folder_path: Path, model_name: str
+        self, epoch: int, loss: float, save_path: Path, model_name: str
     ) -> None:
-        if not save_folder_path.exists():
+        if not save_path.exists():
             raise Exception(
                 "Model save path does not exist. If you are running the save method directly, ensure that the save path is valid."
             )
@@ -48,12 +48,9 @@ class TorchModelProxy(BaseModelProxy):
                 "loss": loss,
             }
 
-            torch.save(model_object, save_folder_path.joinpath(f"{model_name}.pt"))
+            torch.save(model_object, save_path.joinpath(f"{model_name}.pt"))
         except Exception as e:
             raise e
-
-    def set_scheduler(self, scheduler: torch.optim.lr_scheduler.LRScheduler) -> None:
-        self._scheduler = scheduler
 
     def get_lr(self) -> float:
         return self._optimizer.param_groups[0]["lr"]
@@ -63,9 +60,7 @@ class TorchModelProxy(BaseModelProxy):
 
     def step(self, avg_vloss: float) -> None:
         if self.has_scheduler():
-            if isinstance(
-                self._scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
-            ):
+            if isinstance(self._scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 self._scheduler.step(avg_vloss)
             else:
                 self._scheduler.step()
@@ -101,6 +96,6 @@ class TorchModelProxy(BaseModelProxy):
             raise e
 
         return running_vloss / len(test_data)
-    
-    def summary(self) -> None:
-        print(torchinfo.summary(self._model))
+
+    def summary(self) -> torchinfo.ModelStatistics:
+        return torchinfo.summary(self._model)

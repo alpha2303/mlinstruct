@@ -1,8 +1,8 @@
 import numpy as np
 from unittest import TestCase
 
-from mlinstruct.evaluation.metrics.classification import ConfusionMatrix
-from mlinstruct.evaluation.metrics import IncompatibleDimsException,IncompatibleValuesException
+from mlinstruct.eval.metrics.classification import ConfusionMatrix
+from mlinstruct.eval.metrics import IncompatibleDimsException,IncompatibleValuesException
 
 
 class TestConfusionMatrix(TestCase):

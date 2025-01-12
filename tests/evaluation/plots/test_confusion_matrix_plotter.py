@@ -3,7 +3,7 @@ import numpy as np
 from unittest import TestCase
 import matplotlib.pyplot as plt
 
-from mlinstruct.evaluation.plots._cm_plotter import ConfusionMatrixPlotter
+from mlinstruct.eval.plots._cm_plotter import ConfusionMatrixPlotter
 
 
 class TestConfusionMatrixPlotter(TestCase):
