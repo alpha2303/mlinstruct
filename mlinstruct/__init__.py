@@ -1,5 +1,5 @@
-from . import evaluation
+from . import eval
 from . import train
 from . import utils
 
-__all__ = ["evaluation", "train", "utils"]
+__all__ = ["eval", "train", "utils"]

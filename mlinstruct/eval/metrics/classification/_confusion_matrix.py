@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Self
+from typing import Self, Optional
 from matplotlib.axes import Axes
 
 from .._metric_utils import (
@@ -13,7 +13,6 @@ from ...plots import (
     ConfusionMatrixPlotter,
     # DEFAULT_CMP_CONFIG,
 )
-from ....utils import Option, Result
 
 def _compute_confusion_matrix(
     truth_array: np.ndarray, pred_array: np.ndarray, class_count: int
@@ -28,7 +27,7 @@ def _compute_confusion_matrix(
 
 class ConfusionMatrix:
     def __init__(
-        self, confusion_matrix: np.ndarray, class_labels: Option[list] = Option.none()
+        self, confusion_matrix: np.ndarray, class_labels: Optional[list] = None
     ):
         self._confusion_matrix = confusion_matrix
         self._class_labels = class_labels
@@ -38,25 +37,25 @@ class ConfusionMatrix:
         cls,
         y: np.ndarray,
         y_pred: np.ndarray,
-        class_labels: Option[list] = Option.none(),
-    ) -> Result[Self, Exception]:
+        class_labels: Optional[list] = None
+    ) -> Self:
 
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
-            return Result.err(IncompatibleDimsException(y.shape, y_pred.shape))
+            raise IncompatibleDimsException(y.shape, y_pred.shape)
 
         if not MetricUtils.is_valid_input_values(y, y_pred):
-            return Result.err(IncompatibleValuesException())
+            raise IncompatibleValuesException()
 
         try:
             confusion_matrix = _compute_confusion_matrix(y, y_pred, len(np.unique(y)))
-            return Result.ok(cls(confusion_matrix, class_labels))
+            return cls(confusion_matrix, class_labels)
         except Exception as e:
-            return Result.err(e)
+            raise e
 
-    def as_ndarray(self) -> Option[np.ndarray]:
+    def as_ndarray(self) -> Optional[np.ndarray]:
         if self._confusion_matrix is not None:
-            return Option.some(self._confusion_matrix)
-        return Option.none()
+            return self._confusion_matrix
+        return None
 
     def plot(
         self,
@@ -64,7 +63,7 @@ class ConfusionMatrix:
         xaxis_name: str = "Predicted",
         yaxis_name: str = "True",
         **kwargs,
-    ) -> Result[Axes, Exception]:
+    ) -> Axes:
         _, ax = plt.subplots()
 
         return ConfusionMatrixPlotter(
