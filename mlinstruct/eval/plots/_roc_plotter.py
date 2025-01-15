@@ -37,7 +37,7 @@ class ROCPlotter:
         plot_label: str = "ROC Curve",
         add_legend: bool = True,
         legend_loc: str = "lower right",
-        **kwargs
+        **kwargs,
     ) -> axes.Axes:
         """
         plot() -> Generates the ROC Curve on `matplotlib.axes.Axes` object provided.

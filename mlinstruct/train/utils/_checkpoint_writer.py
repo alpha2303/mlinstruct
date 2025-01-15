@@ -12,7 +12,9 @@ class CheckpointWriter:
         self._model_save_path: Path = self.regenerate_path()
 
     def regenerate_path(self) -> None:
-        self._model_save_path = self._save_folder_path.joinpath(datetime.now().strftime(_TIMESTAMP_FORMAT))
+        self._model_save_path = self._save_folder_path.joinpath(
+            datetime.now().strftime(_TIMESTAMP_FORMAT)
+        )
         if not self._model_save_path.exists():
             self._model_save_path.mkdir(parents=True)
 

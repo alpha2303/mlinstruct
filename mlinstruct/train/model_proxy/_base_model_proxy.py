@@ -25,6 +25,6 @@ class BaseModelProxy:
 
     def validate(self, test_data: Iterable) -> float:
         raise NotImplementedError()
-    
+
     def summary(self) -> None:
         raise NotImplementedError()

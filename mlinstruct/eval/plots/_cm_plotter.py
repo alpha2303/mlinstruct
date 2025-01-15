@@ -85,7 +85,7 @@ class ConfusionMatrixPlotter:
                 f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
             )
 
-        cmap: Colormap = kwargs.get(cmap) if "cmap" in kwargs else DEFAULT_CMAP
+        cmap: Colormap = kwargs.get("cmap") if "cmap" in kwargs else DEFAULT_CMAP
         self._ax.matshow(self._conf_matrix, cmap=cmap)
         self._ax.set_xlabel(xaxis_name)
         self._ax.set_ylabel(yaxis_name)

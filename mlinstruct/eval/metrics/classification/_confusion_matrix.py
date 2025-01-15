@@ -14,6 +14,7 @@ from ...plots import (
     # DEFAULT_CMP_CONFIG,
 )
 
+
 def _compute_confusion_matrix(
     truth_array: np.ndarray, pred_array: np.ndarray, class_count: int
 ) -> np.ndarray:
@@ -34,12 +35,8 @@ class ConfusionMatrix:
 
     @classmethod
     def from_predictions(
-        cls,
-        y: np.ndarray,
-        y_pred: np.ndarray,
-        class_labels: Optional[list] = None
+        cls, y: np.ndarray, y_pred: np.ndarray, class_labels: Optional[list] = None
     ) -> Self:
-
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
@@ -71,14 +68,3 @@ class ConfusionMatrix:
             self._confusion_matrix,
             self._class_labels,
         ).plot(title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name, kwargs=kwargs)
-
-
-# def _labelize_binary(y_pred: np.ndarray, threshold: float) -> np.ndarray:
-#     return np.where(y_pred > threshold, 1, 0)
-
-
-# def _labelize_multiclass(y_pred: np.ndarray) -> np.ndarray:
-#     return [np.argmax(y_pred[i])[0] for i in y_pred.shape[0]]
-
-
-

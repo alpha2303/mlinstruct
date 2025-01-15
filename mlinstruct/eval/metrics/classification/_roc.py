@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve
 from matplotlib.axes import Axes
 from typing import Self, Optional
 
@@ -55,7 +55,7 @@ class ROC:
         title: str = "Receiver operating characteristic (ROC) curve",
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
-        **kwargs
+        **kwargs,
     ) -> Axes:
         _, ax = plt.subplots()
 
