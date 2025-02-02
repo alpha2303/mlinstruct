@@ -6,7 +6,7 @@ description = "Python library for managing ML model training instances and evalu
 authors = ["Rahul Pavithran <rahul.pavithran99@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/alpha2303/ivy-torch"
+repository = "https://github.com/alpha2303/mlinstruct"
 
 packages = [{include = "mlinstruct", from = "."}]
 

@@ -20,7 +20,7 @@ class BaseModelProxy:
     def step(self, avg_vloss: float) -> None:
         raise NotImplementedError()
 
-    def train_one_epoch(self, trainLoader: Iterable) -> float:
+    def train_one_epoch(self, train_data: Iterable) -> float:
         raise NotImplementedError()
 
     def validate(self, test_data: Iterable) -> float:

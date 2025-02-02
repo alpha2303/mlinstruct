@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import torch
+from torch.utils.data import DataLoader
 import torchinfo
 
 from ._base_model_proxy import BaseModelProxy
@@ -65,11 +66,16 @@ class TorchModelProxy(BaseModelProxy):
             else:
                 self._scheduler.step()
 
-    def train_one_epoch(self, trainLoader: Iterable) -> float:
+    def train_one_epoch(self, train_data: Iterable) -> float:
+        if not isinstance(train_data, DataLoader):
+            raise Exception(
+                "Training Input is not an instance of torch.utils.data.DataLoader"
+            )
+
         running_loss = 0.0
         self._model.train()
 
-        for _, data in enumerate(trainLoader):
+        for _, data in enumerate(train_data):
             X_batch, Y_batch = data
             Y_pred = self._model(X_batch)
             loss = self._loss_fn(Y_pred, Y_batch)
@@ -79,9 +85,13 @@ class TorchModelProxy(BaseModelProxy):
 
             running_loss += loss.item()
 
-        return running_loss / len(trainLoader)
+        return running_loss / len(train_data)
 
     def validate(self, test_data: Iterable) -> float:
+        if not isinstance(test_data, DataLoader):
+            raise Exception(
+                "Test Input is not an instance of torch.utils.data.DataLoader"
+            )
         running_vloss: float = 0.0
         self._model.eval()
 

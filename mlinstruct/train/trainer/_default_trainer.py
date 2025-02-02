@@ -1,29 +1,21 @@
-from pathlib import Path
-from typing import Iterable, Optional
-
+from typing import Iterable
 import numpy as np
 
-from ..model_proxy._base_model_proxy import BaseModelProxy
 from ._base_trainer import BaseTrainer
-from ..utils import CheckpointWriter
-
-_DEFAULT_SAVE_PATH: Path = Path("./Models")
 
 
 class DefaultTrainer(BaseTrainer):
     def __init__(
         self,
-        model_proxy: BaseModelProxy,
-        save_root_dir: Optional[Path] = _DEFAULT_SAVE_PATH,
     ) -> None:
-        self._model_proxy = model_proxy
-        self._checkpoint_writer: Optional[CheckpointWriter] = None
-        if save_root_dir:
-            self._checkpoint_writer: CheckpointWriter = CheckpointWriter(save_root_dir)
+        super().__init__()
 
     def train(
         self, train_data: Iterable, test_data: Iterable, n_iter: int
     ) -> tuple[np.ndarray, np.ndarray]:
+        if not self._model_proxy:
+            raise Exception("Model is not provided")
+
         best_vloss: float = np.inf
         train_loss_list, test_loss_list = [], []
         if self._checkpoint_writer:
