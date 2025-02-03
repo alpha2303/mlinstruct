@@ -10,23 +10,36 @@ _DEFAULT_SAVE_PATH: Path = Path("./Models")
 
 
 class BaseTrainer:
-    _model_proxy: BaseModelProxy
+    _model_proxy: BaseModelProxy = None
+    _train_data: Iterable = None
+    _val_data: Iterable = None
+    _test_data: Optional[Iterable] = None
     _early_stopper: Optional[EarlyStopper] = None
     _checkpoint_writer: Optional[CheckpointWriter] = None
 
-    def train(
-        self, train_data: Iterable, test_data: Iterable, n_iter: int
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def train(self, max_epochs: int) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError()
-    
+
     def add_model_proxy(self, model_proxy: BaseModelProxy) -> Self:
         self._model_proxy = model_proxy
+        return self
+
+    def add_train_data(self, train_data: Iterable) -> Self:
+        self._train_data = train_data
+        return self
+
+    def add_val_data(self, val_data: Iterable) -> Self:
+        self._val_data = val_data
+        return self
+
+    def add_test_data(self, test_data: Iterable) -> Self:
+        self._test_data = test_data
         return self
 
     def add_early_stop(self, patience: int = 2, min_delta: float = 0.01) -> Self:
         self._early_stopper = EarlyStopper(patience=patience, min_delta=min_delta)
         return self
-    
+
     def add_checkpoint_save(self, save_root_dirpath: Path = _DEFAULT_SAVE_PATH) -> Self:
         self._checkpoint_writer = CheckpointWriter(save_root_dirpath)
         return self
