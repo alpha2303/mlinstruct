@@ -124,14 +124,8 @@ class DefaultTrainer(BaseTrainer):
         Raises:
             TrainerError: If any of the required trainer attributes are not initialized.
         """
-        if not self.__model_proxy or not isinstance(self.__model_proxy, BaseModelProxy):
-            raise TrainerError(
-                "Model proxy is not provided. Chain the `add_model_proxy()` method to provide a valid model proxy."
-            )
+        if not isinstance(self.__model_proxy, BaseModelProxy):
+            raise TrainerError("Model proxy is not provided.")
 
-        if not self.__data_payload or not isinstance(
-            self.__data_payload, BaseDataPayload
-        ):
-            raise TrainerError(
-                "Training DataLoader is not provided. Chain the `add_train_data()` method to provide training DataLoader"
-            )
+        if not isinstance(self.__data_payload, BaseDataPayload):
+            raise TrainerError("Training Data Payload is not provided.")

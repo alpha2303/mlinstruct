@@ -26,18 +26,22 @@ class TorchDataPayload(BaseDataPayload):
         self.__validate_input_data()
         super().__init__(train_data, val_data, test_data)
 
-    def __validate_input_data(self) -> None:
+    def __validate_input_data(
+        self,
+        train_data: DataLoader,
+        val_data: DataLoader,
+        test_data: Optional[DataLoader],
+        **kwargs,
+    ) -> None:
         """
         Validate the input data loaders.
 
         Raises:
             TypeError: If any of the data loaders are not instances of DataLoader.
         """
-        if not isinstance(self.__train_data, DataLoader):
+        if not isinstance(train_data, DataLoader):
             raise TypeError("Expected train_data to be a DataLoader")
-        if not isinstance(self.__val_data, DataLoader):
+        if not isinstance(val_data, DataLoader):
             raise TypeError("Expected val_data to be a DataLoader")
-        if self.__test_data is not None and not isinstance(
-            self.__test_data, DataLoader
-        ):
+        if test_data is not None and not isinstance(test_data, DataLoader):
             raise TypeError("Expected test_data to be a DataLoader")

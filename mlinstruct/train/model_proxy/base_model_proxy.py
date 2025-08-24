@@ -1,8 +1,9 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable
 
 
-class BaseModelProxy:
+class BaseModelProxy(ABC):
     """Base class for model proxies.
 
     This class defines the interface for model proxies, which are responsible for
@@ -12,14 +13,16 @@ class BaseModelProxy:
     different frameworks and the trainer logic.
     """
 
+    @abstractmethod
     def load_weights(self, model_file_path: Path) -> None:
         """Load model weights from a saved model checkpoint file.
 
         Args:
             model_file_path (Path): The path to the model file.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def save_weights(
         self, epoch: int, loss: float, save_folder_path: Path, model_name: str
     ) -> None:
@@ -32,8 +35,9 @@ class BaseModelProxy:
             save_folder_path (Path): The folder path to save the model weights.
             model_name (str): The name of the model.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_lr(self) -> float:
         """
         Get the current learning rate.
@@ -41,8 +45,9 @@ class BaseModelProxy:
         Returns:
             float: The current learning rate.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def has_scheduler(self) -> bool:
         """
         Check if the model has a learning rate scheduler.
@@ -50,8 +55,9 @@ class BaseModelProxy:
         Returns:
             bool: True if the model has a scheduler, False otherwise.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def step(self, avg_vloss: float) -> None:
         """
         Update the learning rate scheduler.
@@ -59,8 +65,9 @@ class BaseModelProxy:
         Args:
             avg_vloss (float): The average validation loss.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def train_one_epoch(self, train_data: Iterable) -> float:
         """
         Train the model for one epoch.
@@ -71,8 +78,9 @@ class BaseModelProxy:
         Returns:
             float: The average training loss for the epoch.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def validate(self, test_data: Iterable) -> float:
         """
         Validate the model on the given test data.
@@ -83,10 +91,4 @@ class BaseModelProxy:
         Returns:
             float: The average validation loss for the test data.
         """
-        raise NotImplementedError()
-
-    def summary(self) -> None:
-        """
-        Print a summary of the model architecture and parameters.
-        """
-        raise NotImplementedError()
+        pass

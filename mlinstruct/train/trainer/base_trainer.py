@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Self, Tuple
 import numpy as np
@@ -9,7 +10,7 @@ from train.utils import EarlyStopper, CheckpointWriter
 _DEFAULT_SAVE_PATH: Path = Path("./Models")
 
 
-class BaseTrainer:
+class BaseTrainer(ABC):
     """Base class for all trainers."""
 
     __model_proxy: BaseModelProxy
@@ -17,10 +18,13 @@ class BaseTrainer:
     __early_stopper: Optional[EarlyStopper] = None
     __checkpoint_writer: Optional[CheckpointWriter] = None
 
-    def __init__(self, model_proxy: BaseModelProxy, data_payload: BaseDataPayload) -> None:
+    def __init__(
+        self, model_proxy: BaseModelProxy, data_payload: BaseDataPayload
+    ) -> None:
         self.__model_proxy = model_proxy
         self.__data_payload = data_payload
 
+    @abstractmethod
     def train(self, max_epochs: int) -> Tuple[np.ndarray, np.ndarray]:
         """Train the model.
 
@@ -30,7 +34,7 @@ class BaseTrainer:
         Returns:
             Tuple[np.ndarray, np.ndarray]: The training and validation losses.
         """
-        raise NotImplementedError()
+        pass
 
     def add_early_stop(self, patience: int = 2, min_delta: float = 0.01) -> Self:
         """Add early stopping to the trainer.
@@ -60,9 +64,7 @@ class BaseTrainer:
         Returns:
             bool: True if the trainer has a checkpoint writer, False otherwise.
         """
-        return self.__checkpoint_writer is not None and isinstance(
-            self.__checkpoint_writer, CheckpointWriter
-        )
+        return isinstance(self.__checkpoint_writer, CheckpointWriter)
 
     def has_early_stopper(self) -> bool:
         """Check if the trainer has an early stopper.
@@ -70,6 +72,4 @@ class BaseTrainer:
         Returns:
             bool: True if the trainer has an early stopper, False otherwise.
         """
-        return self.__early_stopper is not None and isinstance(
-            self.__early_stopper, EarlyStopper
-        )
+        return isinstance(self.__early_stopper, EarlyStopper)

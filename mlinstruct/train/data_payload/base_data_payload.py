@@ -1,7 +1,8 @@
+from abc import ABC, abstractmethod
 from typing import Iterable, Optional
 
 
-class BaseDataPayload:
+class BaseDataPayload(ABC):
     """Base class for all data payloads.
 
     Training data, validation data, and optional test data are provided as input.
@@ -57,3 +58,8 @@ class BaseDataPayload:
             bool: True if test data is available, False otherwise.
         """
         return self.__test_data is not None
+
+    @abstractmethod
+    def __validate_input_data(self, *args, **kwargs) -> None:
+        """Validate the input data."""
+        pass
