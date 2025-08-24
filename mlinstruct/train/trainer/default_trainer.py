@@ -1,7 +1,8 @@
 import logging
 import numpy as np
-from typing import Optional, Tuple
+from typing import Optional
 
+from train.train_result import TrainResult
 from train.data_payload.base_data_payload import BaseDataPayload
 from train.utils.checkpoint_writer import CheckpointWriter
 from train.utils.early_stopper import EarlyStopper
@@ -33,10 +34,10 @@ class DefaultTrainer(BaseTrainer):
         self.__data_payload: BaseDataPayload = data_payload
         self.__checkpoint_writer: Optional[CheckpointWriter] = checkpoint_writer
         self.__early_stopper: Optional[EarlyStopper] = early_stopper
-        self.logger: logging.Logger = logger
+        self.__logger: logging.Logger = logger
         super().__init__()
 
-    def train(self, max_epochs: int) -> Tuple[np.ndarray, np.ndarray]:
+    def train(self, max_epochs: int) -> TrainResult:
         """Train the model.
 
         Args:
@@ -57,7 +58,9 @@ class DefaultTrainer(BaseTrainer):
             if self.has_checkpoint_writer():
                 self.__checkpoint_writer.regenerate_model_save_path()
 
-            for epoch_index in range(0, max_epochs):
+            epochs_completed: int = 0
+
+            for epoch_index in range(1, max_epochs + 1):
                 avg_loss = self.__model_proxy.train_one_epoch(
                     self.__data_payload.get_train_data()
                 )
@@ -66,8 +69,8 @@ class DefaultTrainer(BaseTrainer):
                     self.__data_payload.get_val_data()
                 )
 
-                self.logger.info(
-                    f"Epoch {epoch_index + 1}: Training Loss = {avg_loss} | Validation Loss = {avg_vloss} | Learning Rate = {self.__model_proxy.get_lr()}"
+                self.__logger.info(
+                    f"Epoch {epoch_index}: Training Loss = {avg_loss} | Validation Loss = {avg_vloss} | Learning Rate = {self.__model_proxy.get_lr()}"
                 )
 
                 train_loss_list.append(avg_loss)
@@ -83,29 +86,36 @@ class DefaultTrainer(BaseTrainer):
 
                     if self.has_checkpoint_writer():
                         self.__checkpoint_writer.create_checkpoint(
-                            self.__model_proxy, epoch_index + 1, avg_vloss, is_best
+                            self.__model_proxy, epoch_index, avg_vloss, is_best
                         )
 
+                epochs_completed = epoch_index
+
                 if self.__early_stopper and self.__early_stopper.early_stop(avg_vloss):
-                    self.logger.info(
-                        f"Early stop triggered at epoch: {epoch_index + 1}"
-                    )
+                    self.__logger.info(f"Early stop triggered at epoch: {epoch_index}")
                     break
 
             if self.__data_payload.has_test_data():
                 avg_tloss = self.__model_proxy.validate(
                     self.__data_payload.get_test_data()
                 )
-                self.logger.info(f"Average Test Loss: {avg_tloss}")
+                self.__logger.info(f"Average Test Loss: {avg_tloss}")
 
             if self.has_checkpoint_writer():
-                self.logger.info(
+                self.__logger.info(
                     f"Model checkpoints saved to {self.__checkpoint_writer.get_model_save_path().resolve()}"
                 )
 
-            return (train_loss_list, val_loss_list)
+            return TrainResult(
+                model_name=self.__model_proxy.get_model_name(),
+                model_save_path=self.__checkpoint_writer.get_model_save_path().resolve(),
+                epochs=epochs_completed,
+                train_loss_list=train_loss_list,
+                val_loss_list=val_loss_list,
+            )
+
         except Exception as e:
-            self.logger.error(f"Error during training: {str(e)}")
+            self.__logger.error(f"Error during training: {str(e)}")
             raise
 
     def __validate_trainer_attrs(self) -> None:
