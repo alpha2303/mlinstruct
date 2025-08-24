@@ -44,7 +44,7 @@ class DefaultTrainer(BaseTrainer):
             max_epochs (int): The maximum number of training epochs.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The training and validation losses.
+            TrainResult: The result of the training process.
 
         Raises:
             InitException: If any of the required trainer attributes are not initialized.

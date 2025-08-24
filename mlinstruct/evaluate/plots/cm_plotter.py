@@ -1,125 +1,110 @@
 from typing import Optional
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-
-DEFAULT_CMAP = plt.cm.Blues
-
-# class ConfusionMatrixPlotConfig:
-#     def __init__(
-#         self,
-#         cmap: Colormap,
-#         title: str,
-#         xaxis_name: str,
-#         yaxis_name: str,
-#     ):
-#         self.cmap = cmap
-#         self.title = title
-#         self.xaxis_name = xaxis_name
-#         self.yaxis_name = yaxis_name
+from evaluate.plots.base_plotter import BasePlotter, __DEFAULT_CMAP
 
 
-# DEFAULT_CMP_CONFIG = ConfusionMatrixPlotConfig(
-#     cmap=plt.cm.Blues,
-#     title="Confusion Matrix",
-#     xaxis_name="Predicted",
-#     yaxis_name="True",
-# )
+class ConfusionMatrixPlotter(BasePlotter):
+    """Creates a plotting object to visualize a Confusion Matrix.
 
-
-class ConfusionMatrixPlotter:
-    """
-    Creates a plotting object to visualize a Confusion Matrix.
-
-    Required Arguments:
-    ax: `matplotlib.axes.Axes` - Matplotlib Axes object on which the plot will be drawn.
-    conf_matrix: `numpy.ndarray` - NumPy array representing the input confusion matrix.
-
-    Optional Arguments:
-    class_labels: `Option[list]` - List of strings containing the class labels represented in the confusion matrix. Default = `None`
+    Args:
+        title (str, optional): Title of the plot. Defaults to "Confusion Matrix".
+        xaxis_name (str, optional): Label of the X axis. Defaults to "Predicted".
+        yaxis_name (str, optional): Label of the Y axis. Defaults to "True".
+        cmap (Colormap, optional): Color palette for the heatmap. Defaults to __DEFAULT_CMAP.
     """
 
     def __init__(
         self,
-        ax: Axes,
-        conf_matrix: np.ndarray,
-        class_labels: Optional[list] = None,
-    ):
-        self._ax: Axes = ax
-        self._conf_matrix: np.ndarray = conf_matrix
-        self._class_labels: np.ndarray | list = class_labels
-        if not class_labels:
-            self._class_labels = np.arange(self._conf_matrix.shape[0])
-
-    def plot(
-        self,
         title: str = "Confusion Matrix",
         xaxis_name: str = "Predicted",
         yaxis_name: str = "True",
+        cmap: Colormap = __DEFAULT_CMAP,
+    ):
+        self.__title: str = title
+        self.__xaxis_name: str = xaxis_name
+        self.__yaxis_name: str = yaxis_name
+        self.__cmap: Colormap = cmap
+
+    def plot(
+        self,
+        ax: Axes,
+        conf_matrix: np.ndarray,
+        class_labels: Optional[list] = None,
         **kwargs,
     ) -> Axes:
+        """Generates the Confusion Matrix Heatmap Plot.
+
+        Args:
+            ax (Axes): Matplotlib Axes object on which the plot will be drawn.
+            conf_matrix (np.ndarray): NumPy array representing the confusion matrix.
+            class_labels (Optional[list], optional): List of class labels. Defaults to None.
+            **kwargs: Additional keyword arguments. Currently not supported.
+
+        Returns:
+            Axes: The matplotlib axes containing the plot.
+
+        Raises:
+            ValueError: If confusion matrix dimensions are not square or if number of
+                class labels doesn't match matrix dimensions.
         """
-        plot() -> Generates the Confusion Matrix Heatmap Plot on `matplotlib.axes.Axes` object provided.
-        Arguments follow the options provided by Matplotlib.
-
-        Arguments:
-        cmap: `matplotlib.colors.ColorMap` - Color palette for the Confusion Matrix heatmap. Default = `matplotlib.pyplot.cm.Blues`
-        title: `str` - Title of the plot. Default = `"Confusion Matrix"`
-        xaxis_name: `str` - Label of the X axis of the plot. Default = `"True"`
-        yaxis_name: `str` - Label of the Y axis of the plot. Default = `"Predicted"`
-
-        """
-
-        if self._conf_matrix is None:
-            raise Exception("Confusion Matrix not initialized.")
-
-        if self._conf_matrix.shape[0] != self._conf_matrix.shape[1]:
-            raise Exception(
-                f"Invalid dimensions: {self._conf_matrix.shape}. Square matrix required."
+        if conf_matrix.shape[0] != conf_matrix.shape[1]:
+            raise ValueError(
+                f"Invalid dimensions: {conf_matrix.shape}. Square matrix required."
             )
 
-        if len(self._class_labels) != self._conf_matrix.shape[0]:
-            raise Exception(
-                f"Number of class labels ({len(self._class_labels)}) do not match length of confusion matrix ({self._conf_matrix.shape[0]})."
+        if class_labels is None:
+            class_labels = np.arange(conf_matrix.shape[0])
+
+        if len(class_labels) != conf_matrix.shape[0]:
+            raise ValueError(
+                f"Number of class labels ({len(class_labels)}) do not match length of confusion matrix ({conf_matrix.shape[0]})."
             )
 
-        cmap: Colormap = kwargs.get("cmap") if "cmap" in kwargs else DEFAULT_CMAP
-        self._ax.matshow(self._conf_matrix, cmap=cmap)
-        self._ax.set_xlabel(xaxis_name)
-        self._ax.set_ylabel(yaxis_name)
-        self._ax.set_title(title)
-        self._ax.tick_params(
+        ax.matshow(conf_matrix, cmap=self.__cmap)
+        ax.set_xlabel(self.__xaxis_name)
+        ax.set_ylabel(self.__yaxis_name)
+        ax.set_title(self.__title)
+        ax.tick_params(
             axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
         )
 
-        if self._class_labels is not None:
-            self._ax.set_xticks(
-                np.arange(len(self._class_labels)), labels=self._class_labels
-            )
-            self._ax.set_yticks(
-                np.arange(len(self._class_labels)), labels=self._class_labels
-            )
+        if class_labels is not None:
+            ax.set_xticks(np.arange(len(class_labels)), labels=class_labels)
+            ax.set_yticks(np.arange(len(class_labels)), labels=class_labels)
 
-        for i in range(self._conf_matrix.shape[0]):
-            for j in range(self._conf_matrix.shape[1]):
-                self._ax.text(
+        for i in range(conf_matrix.shape[0]):
+            for j in range(conf_matrix.shape[1]):
+                ax.text(
                     j,
                     i,
-                    self._conf_matrix[i, j],
+                    conf_matrix[i, j],
                     va="center",
                     ha="center",
-                    color=self._get_text_color(i, j),
+                    color=self.__get_text_color(conf_matrix, i, j),
                 )
 
-        self._ax.figure.subplots_adjust(right=1.0)
+        ax.figure.subplots_adjust(right=1.0)
 
-        return self._ax
+        return ax
 
-    def _get_text_color(self, row_idx: int, col_idx: int) -> str:
-        max_val = self._conf_matrix.max()
+    def __get_text_color(
+        self, conf_matrix: np.ndarray, row_idx: int, col_idx: int
+    ) -> str:
+        """Determines the text color based on the cell value.
+
+        Args:
+            conf_matrix (np.ndarray): The confusion matrix.
+            row_idx (int): Row index of the cell.
+            col_idx (int): Column index of the cell.
+
+        Returns:
+            str: Color name ('black' or 'white').
+        """
+        max_val = conf_matrix.max()
         color = "black"
-        if max_val > 0 and self._conf_matrix[row_idx, col_idx] / max_val > 0.5:
+        if max_val > 0 and conf_matrix[row_idx, col_idx] / max_val > 0.5:
             color = "white"
         return color

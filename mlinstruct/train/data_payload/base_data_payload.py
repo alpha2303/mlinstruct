@@ -27,13 +27,33 @@ class BaseDataPayload:
         self.__test_data = test_data
 
     def get_train_data(self) -> Iterable:
+        """Get the training data.
+
+        Returns:
+            Iterable: The training data.
+        """
         return self.__train_data
 
     def get_val_data(self) -> Iterable:
+        """Get the validation data.
+
+        Returns:
+            Iterable: The validation data.
+        """
         return self.__val_data
 
     def get_test_data(self) -> Optional[Iterable]:
+        """Get the test data.
+
+        Returns:
+            Optional[Iterable]: The test data if exists, else None.
+        """
         return self.__test_data
 
     def has_test_data(self) -> bool:
+        """Check if test data is available.
+
+        Returns:
+            bool: True if test data is available, False otherwise.
+        """
         return self.__test_data is not None
