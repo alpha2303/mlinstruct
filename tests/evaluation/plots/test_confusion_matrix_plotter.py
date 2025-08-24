@@ -3,7 +3,7 @@ import numpy as np
 from unittest import TestCase
 import matplotlib.pyplot as plt
 
-from mlinstruct.eval.plots._cm_plotter import ConfusionMatrixPlotter
+from mlinstruct.eval.plots.cm_plotter import ConfusionMatrixPlotter
 
 
 class TestConfusionMatrixPlotter(TestCase):
@@ -32,5 +32,5 @@ class TestConfusionMatrixPlotter(TestCase):
         )
         try:
             axes = cm_plotter.plot()
-        except:
-            self.fail("Unexpected error occurred")
+        except Exception as e:
+            self.fail(f"Unexpected error occurred: {e}")
