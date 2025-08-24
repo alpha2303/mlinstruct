@@ -4,11 +4,9 @@ from sklearn.metrics import roc_curve
 from matplotlib.axes import Axes
 from typing import Self, Optional
 
-from .._metric_utils import (
-    MetricUtils,
-    IncompatibleDimsException,
-)
-from ...plots import ROCPlotter
+from evaluate.metrics.metric_utils import MetricUtils
+from evaluate.plots import ROCPlotter
+from utils.exception import IncompatibleDimsException
 
 
 def _compute_roc_curve(

@@ -1,18 +1,12 @@
+from typing import Self, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Self, Optional
 from matplotlib.axes import Axes
 
-from .._metric_utils import (
-    MetricUtils,
-    IncompatibleDimsException,
-    IncompatibleValuesException,
-)
-from ...plots import (
-    # ConfusionMatrixPlotConfig,
-    ConfusionMatrixPlotter,
-    # DEFAULT_CMP_CONFIG,
-)
+from evaluate.metrics.metric_utils import MetricUtils
+from evaluate.plots.cm_plotter import ConfusionMatrixPlotter
+from utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 
 def _compute_confusion_matrix(
