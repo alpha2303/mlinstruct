@@ -1,8 +1,8 @@
 import numpy as np
 from unittest import TestCase
 
-from mlinstruct.eval.metrics.classification import ConfusionMatrix
-from mlinstruct.eval.metrics import IncompatibleDimsException,IncompatibleValuesException
+from mlinstruct.evaluate.metrics.classification import ConfusionMatrix
+from mlinstruct.utils.exception import IncompatibleDimsException,IncompatibleValuesException
 
 
 class TestConfusionMatrix(TestCase):
@@ -27,13 +27,13 @@ class TestConfusionMatrix(TestCase):
 
     def test_get_valid_cm_as_array(self) -> None:
         cm: ConfusionMatrix = ConfusionMatrix(self.confusion_matrix)
-        self.assertTrue(np.array_equal(cm.as_ndarray(), self.confusion_matrix))
+        self.assertTrue(np.array_equal(cm.as_ndarray(), self.confusion_matrix)) # type: ignore
 
     def test_construct_cm_from_predictions(self) -> None:
         cm: ConfusionMatrix = ConfusionMatrix.from_predictions(self.y, self.y_pred)
         self.assertTrue(
             np.array_equal(
-                cm.as_ndarray(), self.confusion_matrix
+                cm.as_ndarray(), self.confusion_matrix # type: ignore
             )
         )
 
