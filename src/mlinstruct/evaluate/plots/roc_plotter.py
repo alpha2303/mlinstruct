@@ -3,7 +3,7 @@ from matplotlib.colors import Colormap
 import numpy as np
 import matplotlib.axes as axes
 
-from mlinstruct.evaluate.plots.base_plotter import BasePlotter, DEFAULT_CMAP
+from .base_plotter import BasePlotter, DEFAULT_CMAP
 
 
 class ROCPlotter(BasePlotter):

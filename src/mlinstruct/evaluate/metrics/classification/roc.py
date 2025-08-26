@@ -1,14 +1,15 @@
 from typing import Self, Optional
 
-from matplotlib.colors import Colormap
 import numpy as np
 from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.colors import Colormap
 
-from mlinstruct.evaluate.metrics.metric_utils import MetricUtils
-from mlinstruct.evaluate.plots.roc_plotter import ROCPlotter, DEFAULT_CMAP
-from mlinstruct.utils.exception import IncompatibleDimsException
+from ..metric_utils import MetricUtils
+from ...plots.base_plotter import DEFAULT_CMAP
+from ...plots.roc_plotter import ROCPlotter
+from ....utils.exception import IncompatibleDimsException
 
 
 def __compute_roc_curve(

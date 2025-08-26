@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-from mlinstruct.evaluate.metrics.metric_utils import MetricUtils
-from mlinstruct.evaluate.plots.cm_plotter import ConfusionMatrixPlotter, DEFAULT_CMAP
-from mlinstruct.utils.exception import IncompatibleDimsException, IncompatibleValuesException
+from ..metric_utils import MetricUtils
+from ...plots.base_plotter import DEFAULT_CMAP
+from ...plots.cm_plotter import ConfusionMatrixPlotter
+from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 
 def __compute_confusion_matrix(

@@ -6,7 +6,8 @@ from typing import Optional, Self
 from ..data_payload.base_data_payload import BaseDataPayload
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ..train_result import TrainResult
-from ..utils import EarlyStopper, CheckpointWriter
+from ..utils.early_stopper import EarlyStopper
+from ..utils.checkpoint_writer import CheckpointWriter
 
 DEFAULT_SAVE_PATH: Path = Path("./Models")
 _TIMESTAMP_FORMAT: str = "%Y%m%d_%H%M"
