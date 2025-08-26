@@ -6,8 +6,7 @@ from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
 from ..metric_utils import MetricUtils
-from ...plots.base_plotter import DEFAULT_CMAP
-from ...plots.cm_plotter import ConfusionMatrixPlotter
+from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
 from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 

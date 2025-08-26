@@ -4,10 +4,8 @@ import numpy as np
 from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.colors import Colormap
 
 from ..metric_utils import MetricUtils
-from ...plots.base_plotter import DEFAULT_CMAP
 from ...plots.roc_plotter import ROCPlotter
 from ....utils.exception import IncompatibleDimsException
 
@@ -56,7 +54,6 @@ class ROC:
         title: str = "Receiver operating characteristic (ROC) curve",
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
-        cmap: Colormap = DEFAULT_CMAP,
         **kwargs,
     ) -> Axes:
         _, ax = plt.subplots()

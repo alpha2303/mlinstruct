@@ -1,9 +1,8 @@
 from typing import Optional
-from matplotlib.colors import Colormap
 import numpy as np
 import matplotlib.axes as axes
 
-from .base_plotter import BasePlotter, DEFAULT_CMAP
+from .base_plotter import BasePlotter
 
 
 class LossPlotter(BasePlotter):
@@ -36,15 +35,16 @@ class LossPlotter(BasePlotter):
         val_label: str = "Validation",
         add_legend: bool = True,
         legend_loc: str = "upper right",
-        cmap: Colormap = DEFAULT_CMAP,
     ):
-        super().__init__(title, xaxis_name, yaxis_name, cmap)
-        self.train_color: str = train_color
-        self.train_label: str = train_label
-        self.val_color: str = val_color
-        self.val_label: str = val_label
-        self.add_legend: bool = add_legend
-        self.legend_loc: str = legend_loc
+        self.__title: str = title
+        self.__xaxis_name: str = xaxis_name
+        self.__yaxis_name: str = yaxis_name
+        self.__train_color: str = train_color
+        self.__train_label: str = train_label
+        self.__val_color: str = val_color
+        self.__val_label: str = val_label
+        self.__add_legend: bool = add_legend
+        self.__legend_loc: str = legend_loc
 
     def plot(
         self,
@@ -64,17 +64,17 @@ class LossPlotter(BasePlotter):
         Returns:
             matplotlib.axes.Axes: The axes object with the plotted data.
         """
-        ax.plot(train_losses, color=self.train_color, label=self.train_label)
+        ax.plot(train_losses, color=self.__train_color, label=self.__train_label)
         if val_losses is not None:
-            ax.plot(val_losses, color=self.val_color, label=self.val_label)
+            ax.plot(val_losses, color=self.__val_color, label=self.__val_label)
         ax.set_title(self.__title)
         ax.set_xlabel(self.__xaxis_name)
         ax.set_ylabel(self.__yaxis_name)
 
-        if self.add_legend:
-            labels = [self.train_label]
+        if self.__add_legend:
+            labels = [self.__train_label]
             if val_losses is not None:
-                labels.append(self.val_label)
-            ax.legend(labels, loc=self.legend_loc)
+                labels.append(self.__val_label)
+            ax.legend(labels, loc=self.__legend_loc)
 
         return ax

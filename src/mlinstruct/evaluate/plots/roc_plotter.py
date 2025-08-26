@@ -1,9 +1,8 @@
 from typing import Optional
-from matplotlib.colors import Colormap
 import numpy as np
 import matplotlib.axes as axes
 
-from .base_plotter import BasePlotter, DEFAULT_CMAP
+from .base_plotter import BasePlotter
 
 
 class ROCPlotter(BasePlotter):
@@ -31,9 +30,10 @@ class ROCPlotter(BasePlotter):
         plot_label: str = "ROC Curve",
         add_legend: bool = True,
         legend_loc: str = "lower right",
-        cmap: Colormap = DEFAULT_CMAP,
     ):
-        super().__init__(title, xaxis_name, yaxis_name, cmap)
+        self.__title: str = title
+        self.__xaxis_name: str = xaxis_name
+        self.__yaxis_name: str = yaxis_name
         self.__curve_color: str = curve_color
         self.__baseline_color: str = baseline_color
         self.__plot_label: str = plot_label

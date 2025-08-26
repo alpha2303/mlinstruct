@@ -2,8 +2,11 @@ from typing import List, Optional
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
+from matplotlib import colormaps
 
-from .base_plotter import BasePlotter, DEFAULT_CMAP
+from .base_plotter import BasePlotter
+
+DEFAULT_CMAP: Colormap = colormaps.get_cmap("Blues")
 
 
 class ConfusionMatrixPlotter(BasePlotter):
