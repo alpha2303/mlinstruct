@@ -55,7 +55,7 @@ class ConfusionMatrixPlotter(BasePlotter):
         """
         if conf_matrix.shape[0] != conf_matrix.shape[1]:
             raise ValueError(
-                f"Invalid dimensions: {conf_matrix.shape}. Square matrix required."
+                f"Confusion Matrix has invalid dimensions: {conf_matrix.shape}. Square matrix required."
             )
 
         if class_labels is None:
