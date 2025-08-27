@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-from .base_metrics import BaseMetrics
+from ..base_metrics import BaseMetrics
 from ..metric_utils import MetricUtils
 from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
 from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException

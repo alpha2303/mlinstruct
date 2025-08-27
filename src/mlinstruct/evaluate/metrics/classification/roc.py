@@ -5,6 +5,7 @@ from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
+from ..base_metrics import BaseMetrics
 from ..metric_utils import MetricUtils
 from ...plots.roc_plotter import ROCPlotter
 from ....utils.exception import IncompatibleDimsException
@@ -40,7 +41,7 @@ def __compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
     return np.trapz(tpr, fpr)
 
 
-class ROC:
+class ROC(BaseMetrics):
     """
     Receiver Operating Characteristic (ROC) curve.
 
