@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable
 
+from ..utils.enum import ModelFormat
+
 
 class BaseModelProxy(ABC):
     """Base class for model proxies.
@@ -14,7 +16,7 @@ class BaseModelProxy(ABC):
     """
 
     @abstractmethod
-    def load_weights(self, model_file_path: Path) -> None:
+    def load_model(self, model_file_path: Path) -> None:
         """Load model weights from a saved model checkpoint file.
 
         Args:
@@ -23,8 +25,15 @@ class BaseModelProxy(ABC):
         pass
 
     @abstractmethod
-    def save_weights(
-        self, epoch: int, save_dir_path: Path, model_name: str, *args, **kwargs
+    def save_model(
+        self,
+        epoch: int,
+        save_dir_path: Path,
+        model_name: str,
+        loss: float,
+        save_format: ModelFormat,
+        *args,
+        **kwargs,
     ) -> None:
         """
         Save model weights to a file.
@@ -33,6 +42,8 @@ class BaseModelProxy(ABC):
             epoch (int): The current epoch number.
             save_folder_path (Path): The folder path to save the model weights.
             model_name (str): The name of the model.
+            loss (float): The loss value to associate with the saved model.
+            save_format (ModelFormat): The format to save the model weights. Defaults to NATIVE.
         """
         pass
 

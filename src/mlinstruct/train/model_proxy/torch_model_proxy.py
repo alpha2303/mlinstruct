@@ -2,10 +2,12 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from ...utils.funcs import is_dependency_installed
+
 if not is_dependency_installed("torch"):
     raise ImportError("Torch is not available")
 
 from ..model_proxy.base_model_proxy import BaseModelProxy
+from ..utils.enum import ModelFormat
 from ...utils.exception import ModelProxyError
 
 import torchinfo
@@ -25,8 +27,7 @@ class TorchModelProxy(BaseModelProxy):
         model (torch.nn.Module): The PyTorch model to be proxied.
         optimizer (torch.optim.Optimizer): The optimizer for training the model.
         loss_fn (torch.nn.modules.loss._Loss): The loss function for training the model.
-        scheduler (Optional[torch.optim.lr_scheduler.LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
-
+        scheduler (torch.optim.lr_scheduler.LRScheduler, optional): The learning rate scheduler for the model. Defaults to None.
     """
 
     def __init__(
@@ -42,48 +43,82 @@ class TorchModelProxy(BaseModelProxy):
         self.__scheduler = scheduler
         super().__init__()
 
-    def load_weights(self, model_file_path: Path) -> None:
-        """Load model weights from a saved model checkpoint file.
+    def load_model(self, model_file_path: Path) -> None:
+        """Load model from a saved model checkpoint file.
 
         Args:
             model_file_path (Path): The path to the model file.
         """
-        try:
-            checkpoint = torch.load(model_file_path)
-            self.__model.load_state_dict(checkpoint["model_state_dict"])
-            self.__optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        except Exception as e:
-            raise e
+        extension = model_file_path.suffix.lower()
+        match extension:
+            case ModelFormat.PT.value:
+                checkpoint = torch.load(model_file_path)
+                if "model_state_dict" not in checkpoint:
+                    raise ModelProxyError(
+                        "Model state dict is missing from checkpoint."
+                    )
+                self.__model.load_state_dict(checkpoint.get("model_state_dict"))
+
+                if "optimizer_state_dict" in checkpoint:
+                    self.__optimizer.load_state_dict(
+                        checkpoint["optimizer_state_dict"]
+                    )
+            # TODO: Add support for ONNX model format
+            case _:
+                raise ModelProxyError(
+                    f"Unsupported model file format: {extension}."
+                )
 
         self.__model.eval()
 
-    def save_weights(
-        self, epoch: int, save_dir_path: Path, model_name: str, loss: float, **kwargs
+    def save_model(
+        self,
+        epoch: int,
+        save_dir_path: Path,
+        model_name: str,
+        loss: float,
+        save_format: ModelFormat,
+        **kwargs,
     ) -> None:
-        """Save model weights to a file.
+        """Save model to a file.
 
         Args:
             epoch (int): The current epoch number.
-            save_path (Path): The folder path to save the model weights.
+            save_path (Path): The folder path to save the model.
             model_name (str): The name of the model.
             loss (float): The current loss value.
+            save_format (ModelFormat): The format to save the model. Defaults to NATIVE.
+
+        Raises:
+            ModelProxyError:
+                - If the save directory path does not exist.
+                - If the model save format is unsupported.
         """
         if not save_dir_path.exists():
             raise ModelProxyError(
                 "Model save path does not exist. If you are running the save method directly, ensure that the save path is valid."
             )
+        
+        match save_format:
+            case ModelFormat.PT:
+                model_object = {
+                    "epoch": epoch,
+                    "model_state_dict": self.__model.state_dict(),
+                    "optimizer_state_dict": self.__optimizer.state_dict(),
+                    "loss": loss,
+                }
 
-        try:
-            model_object = {
-                "epoch": epoch,
-                "model_state_dict": self.__model.state_dict(),
-                "optimizer_state_dict": self.__optimizer.state_dict(),
-                "loss": loss,
-            }
-
-            torch.save(model_object, save_dir_path.joinpath(f"{model_name}.pt"))
-        except Exception as e:
-            raise e
+                torch.save(model_object, save_dir_path.joinpath(f"{model_name}.pt"))
+            case ModelFormat.ONNX:
+                torch.onnx.export(
+                    model=self.__model,
+                    f=save_dir_path.joinpath(f"{model_name}.onnx"),
+                    dynamo=True,
+                )
+            case _:
+                raise ModelProxyError(
+                    f"Unsupported model save format: {save_format.value}."
+                )
 
     def get_lr(self) -> float:
         """Get the current learning rate from PyTorch optimizer used by the model.

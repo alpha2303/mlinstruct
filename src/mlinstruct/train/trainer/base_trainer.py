@@ -6,6 +6,7 @@ from typing import Optional, Self
 from ..data_payload.base_data_payload import BaseDataPayload
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ..train_result import TrainResult
+from ..utils.enum import ModelFormat
 from ..utils.early_stopper import EarlyStopper
 from ..utils.checkpoint_writer import CheckpointWriter
 
@@ -21,21 +22,7 @@ class BaseTrainer(ABC):
     __checkpoint_writer: CheckpointWriter
     __root_save_dir_path: Path
     __early_stopper: Optional[EarlyStopper]
-
-    def __init__(
-        self,
-        model_proxy: BaseModelProxy,
-        data_payload: BaseDataPayload,
-        early_stopper: Optional[EarlyStopper] = None,
-        save_dir_path: Path = DEFAULT_SAVE_PATH,
-    ) -> None:
-        self.__model_proxy: BaseModelProxy = model_proxy
-        self.__data_payload: BaseDataPayload = data_payload
-        self.__early_stopper: Optional[EarlyStopper] = early_stopper
-        self.__root_save_dir_path: Path = save_dir_path
-        self.__checkpoint_writer: CheckpointWriter = CheckpointWriter(
-            self.__root_save_dir_path
-        )
+    __save_format: ModelFormat
 
     @abstractmethod
     def train(self, max_epochs: int) -> TrainResult:

@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from .enum import ModelFormat
 from ..model_proxy import BaseModelProxy
 
 
@@ -38,7 +39,11 @@ class CheckpointWriter:
         return self.__model_save_dir_path
 
     def create_checkpoint(
-        self, model_proxy: BaseModelProxy, epoch: int, vloss: float
+        self,
+        model_proxy: BaseModelProxy,
+        epoch: int,
+        vloss: float,
+        save_format: ModelFormat,
     ) -> None:
         """Create a model checkpoint.
 
@@ -46,8 +51,13 @@ class CheckpointWriter:
             model_proxy (BaseModelProxy): The model proxy to use for saving weights.
             epoch (int): The current epoch number.
             vloss (float): The validation loss for the current epoch.
+            save_format (ModelFormat): The format to save the model weights. Defaults to NATIVE.
         """
         model_name: str = f"model_epoch_{epoch}_vloss_{vloss:.4f}.pt"
-        model_proxy.save_weights(
-            epoch, self.__model_save_dir_path, model_name, loss=vloss
+        model_proxy.save_model(
+            epoch,
+            self.__model_save_dir_path,
+            model_name,
+            loss=vloss,
+            save_format=save_format,
         )

@@ -13,7 +13,9 @@ TODO: mlinstruct component documentation
 - Technical:
     - [X] Refactor Trainer submodule
     - [X] Refactor Evaluator submodule
-    - [ ] Support loading and storing of models in ONNX format.
+    - [-] Support storing of models in ONNX format.
+    - [ ] Set up Torch as a letigimate optional dependency i.e. only import torch-specific modules if torch is installed.
+    - [ ] Support loading of models in ONNX format (Not natively supported on PyTorch).
     - [ ] Add Kfold Cross Validation Trainer
     - [ ] Add GAN Trainer
     - [ ] Investigate popular training strategies for new trainer ideas

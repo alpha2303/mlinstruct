@@ -15,4 +15,13 @@ def check_params(kwargs: dict, params: dict[str, type]) -> bool:
 
 
 def is_dependency_installed(package_name: str) -> bool:
+    """
+    Check if a Python package is installed.
+
+    Args:
+        package_name (str): The name of the package to check.
+
+    Returns:
+        bool: True if the package is installed, False otherwise.
+    """
     return find_spec(package_name) is not None

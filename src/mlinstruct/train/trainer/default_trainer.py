@@ -7,6 +7,8 @@ from ..data_payload.base_data_payload import BaseDataPayload
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ..train_result import TrainResult
 from ..trainer.base_trainer import DEFAULT_SAVE_PATH, BaseTrainer
+from ..utils.enum import ModelFormat
+from ..utils.checkpoint_writer import CheckpointWriter
 from ..utils.early_stopper import EarlyStopper
 from ...utils.exception import TrainerError
 
@@ -28,14 +30,17 @@ class DefaultTrainer(BaseTrainer):
         data_payload: BaseDataPayload,
         early_stopper: Optional[EarlyStopper] = None,
         save_dir_path: Path = DEFAULT_SAVE_PATH,
+        save_format: ModelFormat = ModelFormat.PT,
         logger: logging.Logger = logging.getLogger(__name__),
     ) -> None:
-        super().__init__(
-            model_proxy=model_proxy,
-            data_payload=data_payload,
-            early_stopper=early_stopper,
-            save_dir_path=save_dir_path,
+        self.__model_proxy: BaseModelProxy = model_proxy
+        self.__data_payload: BaseDataPayload = data_payload
+        self.__early_stopper: Optional[EarlyStopper] = early_stopper
+        self.__root_save_dir_path: Path = save_dir_path
+        self.__checkpoint_writer: CheckpointWriter = CheckpointWriter(
+            self.__root_save_dir_path
         )
+        self.__save_format: ModelFormat = save_format
         self.__logger: logging.Logger = logger
         self.__validate_trainer_attrs()
 
@@ -85,7 +90,7 @@ class DefaultTrainer(BaseTrainer):
                     best_vloss = avg_vloss
 
                     self.__checkpoint_writer.create_checkpoint(
-                        self.__model_proxy, epoch_index, avg_vloss
+                        self.__model_proxy, epoch_index, avg_vloss, self.__save_format
                     )
 
                 epochs_completed = epoch_index
