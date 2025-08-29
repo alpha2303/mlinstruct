@@ -53,7 +53,11 @@ class CheckpointWriter:
             vloss (float): The validation loss for the current epoch.
             save_format (ModelFormat): The format to save the model weights. Defaults to NATIVE.
         """
-        model_name: str = f"model_epoch_{epoch}_vloss_{vloss:.4f}.pt"
+        model_name: str = (
+            f"{model_proxy.get_model_name()}_epoch_{epoch}_vloss_{vloss:.8f}".replace(
+                ".", "_"
+            )
+        )
         model_proxy.save_model(
             epoch,
             self.__model_save_dir_path,

@@ -60,6 +60,13 @@ class BaseDataPayload(ABC):
         return self.__test_data is not None
 
     @abstractmethod
-    def __validate_input_data(self, *args, **kwargs) -> None:
+    def _validate_input_data(
+        self,
+        train_data: Iterable,
+        val_data: Iterable,
+        test_data: Optional[Iterable],
+        *args,
+        **kwargs,
+    ) -> None:
         """Validate the input data."""
         pass

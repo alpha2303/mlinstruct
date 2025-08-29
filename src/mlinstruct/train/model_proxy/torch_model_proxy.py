@@ -33,15 +33,16 @@ class TorchModelProxy(BaseModelProxy):
     def __init__(
         self,
         model: torch.nn.Module,
+        model_name: str,
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.modules.loss._Loss,
         scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
     ) -> None:
         self.__model = model
+        self.__model_name = model_name
         self.__optimizer = optimizer
         self.__loss_fn = loss_fn
         self.__scheduler = scheduler
-        super().__init__()
 
     def load_model(self, model_file_path: Path) -> None:
         """Load model from a saved model checkpoint file.
@@ -225,3 +226,11 @@ class TorchModelProxy(BaseModelProxy):
             torchinfo.ModelStatistics: A summary of the model.
         """
         return torchinfo.summary(self.__model)
+
+    def get_model_name(self) -> str:
+        """Get the name of the model.
+
+        Returns:
+            str: The name of the model.
+        """
+        return self.__model_name
