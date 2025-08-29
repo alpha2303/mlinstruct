@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from .enum import ModelFormat
+from ..data.enum import ModelFormat
 from ..model_proxy import BaseModelProxy
 
 

@@ -7,7 +7,7 @@ if not is_dependency_installed("torch"):
     raise ImportError("Torch is not available")
 
 from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..utils.enum import ModelFormat
+from ..data.enum import ModelFormat
 from ...utils.exception import ModelProxyError
 
 import torchinfo

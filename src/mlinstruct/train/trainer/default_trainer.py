@@ -4,10 +4,10 @@ import numpy as np
 from typing import Optional
 
 from ..data_payload.base_data_payload import BaseDataPayload
+from ..data.train_result import TrainResult
+from ..data.enum import ModelFormat
 from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..train_result import TrainResult
 from ..trainer.base_trainer import DEFAULT_SAVE_PATH, BaseTrainer
-from ..utils.enum import ModelFormat
 from ..utils.checkpoint_writer import CheckpointWriter
 from ..utils.early_stopper import EarlyStopper
 from ...utils.exception import TrainerError

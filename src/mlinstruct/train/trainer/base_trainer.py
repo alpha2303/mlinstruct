@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Optional, Self
 
 from ..data_payload.base_data_payload import BaseDataPayload
+from ..data.train_result import TrainResult
+from ..data.enum import ModelFormat
 from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..train_result import TrainResult
-from ..utils.enum import ModelFormat
 from ..utils.early_stopper import EarlyStopper
 from ..utils.checkpoint_writer import CheckpointWriter
 
