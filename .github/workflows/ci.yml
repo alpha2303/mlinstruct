@@ -34,6 +34,9 @@ jobs:
       - name: Test
         run: uv run pytest --cov-fail-under=75
 
+      - name: Run example
+        run: uv run python examples/toy_regression.py
+
   test-core:
     runs-on: ubuntu-latest
     steps:

@@ -6,6 +6,8 @@ from matplotlib.axes import Axes
 
 
 class BaseMetrics(ABC):
+    """Base class for classification/evaluation metrics that support plotting."""
+
     @classmethod
     @abstractmethod
     def from_predictions(cls, y: np.ndarray, y_pred: np.ndarray, *args, **kwargs) -> Self:

@@ -35,6 +35,7 @@ class MetricsCallback(TrainerCallback):
         self.history: dict[str, list[float]] = {name: [] for name in metrics}
 
     def on_epoch_end(self, trainer, epoch: int, train_loss: float, val_loss: float) -> None:
+        """Predict over the configured loader and append each metric's value to history."""
         y_true, y_pred = trainer._model_proxy.predict(self._loader)
         for name, metric_fn in self._metrics.items():
             self.history[name].append(metric_fn(y_true, y_pred))
