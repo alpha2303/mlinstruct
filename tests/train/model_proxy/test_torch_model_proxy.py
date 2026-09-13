@@ -111,6 +111,40 @@ def test_summary_returns_model_statistics(proxy):
     assert isinstance(proxy.summary(), torchinfo.ModelStatistics)
 
 
+def test_model_is_on_requested_device(tiny_model):
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), device="cpu"
+    )
+
+    assert proxy.device == torch.device("cpu")
+    assert next(proxy._model.parameters()).device == torch.device("cpu")
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+def test_train_one_epoch_on_cuda(tiny_model, tiny_loaders):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), device="cuda"
+    )
+
+    proxy.train_one_epoch(train_loader)
+
+    assert next(proxy._model.parameters()).device.type == "cuda"
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+def test_train_with_cpu_loader_and_gpu_model_does_not_raise(tiny_model, tiny_loaders):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), device="cuda"
+    )
+
+    proxy.train_one_epoch(train_loader)
+
+
 def test_lazy_import_returns_same_class_twice():
     from mlinstruct.train.model_proxy import TorchModelProxy as first_import
     from mlinstruct.train.model_proxy import TorchModelProxy as second_import

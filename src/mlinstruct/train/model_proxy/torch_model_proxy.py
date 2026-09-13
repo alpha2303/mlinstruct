@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 from ..model_proxy.base_model_proxy import BaseModelProxy
+from ..utils.device import move_to_device, resolve_device
 from ...utils.exception import ModelProxyError
 
 import torch
@@ -21,12 +22,18 @@ class TorchModelProxy(BaseModelProxy):
 
     Inherits from BaseModelProxy.
 
+    The proxy expects each batch yielded by a DataLoader to be a 2-tuple of
+    ``(inputs, targets)``; both elements are moved to the proxy's device
+    before the forward pass.
+
     Args:
         model (nn.Module): The PyTorch model to be proxied.
         optimizer (torch.optim.Optimizer): The optimizer for training the model.
         loss_fn (nn.Module): The loss function for training the model.
         scheduler (Optional[LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
         model_name (Optional[str], optional): The name of the model. Defaults to the model class name.
+        device (Optional[Union[str, torch.device]], optional): The device to train on. Defaults to the
+            current accelerator if one is available, else CPU.
 
     """
 
@@ -37,13 +44,20 @@ class TorchModelProxy(BaseModelProxy):
         loss_fn: nn.Module,
         scheduler: Optional[LRScheduler] = None,
         model_name: Optional[str] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        self._model = model
+        self._device = resolve_device(device)
+        self._model = model.to(self._device)
         self._optimizer = optimizer
         self._loss_fn = loss_fn
         self._scheduler = scheduler
         self._model_name = model_name or type(model).__name__
         super().__init__()
+
+    @property
+    def device(self) -> torch.device:
+        """The device the model is trained and evaluated on."""
+        return self._device
 
     def load_weights(self, model_file_path: Path) -> None:
         """Load model weights from a saved model checkpoint file.
@@ -137,8 +151,8 @@ class TorchModelProxy(BaseModelProxy):
 
         running_loss = 0.0
         self._model.train()
-        for _, data in enumerate(train_data):
-            X_batch, Y_batch = data
+        for batch in train_data:
+            X_batch, Y_batch = move_to_device(batch, self._device)
             Y_pred = self._model(X_batch)
             loss = self._loss_fn(Y_pred, Y_batch)
             self._optimizer.zero_grad()
@@ -170,8 +184,8 @@ class TorchModelProxy(BaseModelProxy):
 
         self._model.eval()
         with torch.no_grad():
-            for _, vdata in enumerate(test_data):
-                vX_batch, vY_batch = vdata
+            for batch in test_data:
+                vX_batch, vY_batch = move_to_device(batch, self._device)
                 vY_pred: torch.Tensor = self._model(vX_batch)
                 vloss = self._loss_fn(vY_pred, vY_batch)
                 running_vloss += vloss.item()
