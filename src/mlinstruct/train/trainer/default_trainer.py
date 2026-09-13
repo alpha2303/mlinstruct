@@ -30,6 +30,8 @@ class DefaultTrainer(BaseTrainer):
         callbacks (Sequence[TrainerCallback]): Callbacks invoked at the start of
             training, at the end of every epoch, and at the end of training.
             Defaults to none.
+        show_progress (bool): Whether to show a tqdm progress bar over epochs.
+            Silently does nothing if tqdm isn't installed. Defaults to False.
     """
 
     def __init__(
@@ -41,6 +43,7 @@ class DefaultTrainer(BaseTrainer):
         run_name: str | None = None,
         logger: logging.Logger | None = None,
         callbacks: Sequence[TrainerCallback] = (),
+        show_progress: bool = False,
     ) -> None:
         super().__init__(
             model_proxy=model_proxy,
@@ -51,7 +54,19 @@ class DefaultTrainer(BaseTrainer):
         )
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
         self._callbacks: Sequence[TrainerCallback] = callbacks
+        self._show_progress: bool = show_progress
         self._validate_trainer_attrs()
+
+    def _epoch_iterator(self, epochs: range):
+        if not self._show_progress:
+            return epochs
+
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            return epochs
+
+        return tqdm(epochs, desc="Training")
 
     def train(self, max_epochs: int, resume_from: Path | None = None) -> TrainResult:
         """Train the model.
@@ -88,7 +103,7 @@ class DefaultTrainer(BaseTrainer):
 
         epochs_completed: int = start_epoch - 1
         try:
-            for epoch_index in range(start_epoch, max_epochs + 1):
+            for epoch_index in self._epoch_iterator(range(start_epoch, max_epochs + 1)):
                 avg_loss = self._model_proxy.train_one_epoch(self._data_payload.get_train_data())
 
                 avg_vloss = self._model_proxy.validate(self._data_payload.get_val_data())

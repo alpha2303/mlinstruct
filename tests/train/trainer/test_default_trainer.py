@@ -165,6 +165,27 @@ def test_resume_continues_from_saved_epoch(tiny_model, tiny_loaders, save_dir, m
     assert len(second_result.train_loss_list) == 2
 
 
+def test_show_progress_without_tqdm_does_not_raise(proxy, payload, save_dir, monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "tqdm":
+            raise ImportError("simulated missing tqdm")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    trainer = DefaultTrainer(
+        model_proxy=proxy, data_payload=payload, save_dir_path=save_dir, show_progress=True
+    )
+
+    result = trainer.train(max_epochs=1)
+
+    assert result.epochs == 1
+
+
 def test_callbacks_invoked_in_order(proxy, payload, save_dir):
     callback = RecordingCallback()
     trainer = DefaultTrainer(

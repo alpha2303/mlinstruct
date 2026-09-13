@@ -17,6 +17,7 @@ torch = [
     "torch>=2.6",
     "torchinfo>=1.8,<2",
 ]
+progress = ["tqdm>=4.66,<5"]
 
 [project.urls]
 repository = "https://github.com/alpha2303/mlinstruct"
