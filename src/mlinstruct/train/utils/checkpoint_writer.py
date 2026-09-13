@@ -19,7 +19,6 @@ class CheckpointWriter:
 
     def __init__(self, root_save_dir_path: Path) -> None:
         self._root_save_dir_path = root_save_dir_path
-        self.regenerate_model_save_path()
 
     def regenerate_model_save_path(self) -> None:
         """Regenerate the model save path based on the current timestamp."""

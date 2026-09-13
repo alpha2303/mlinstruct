@@ -19,7 +19,7 @@ class DefaultTrainer(BaseTrainer):
         data_payload (BaseDataPayload): Data payload containing training, validation, and optional test data.
         early_stopper (Optional[EarlyStopper]): Early stopper for stopping training early.
         save_dir_path (Path): Root directory path for saving model checkpoints.
-        logger (logging.Logger): Logger for logging training progress.
+        logger (Optional[logging.Logger]): Logger for logging training progress. Defaults to the module logger.
     """
 
     def __init__(
@@ -28,7 +28,7 @@ class DefaultTrainer(BaseTrainer):
         data_payload: BaseDataPayload,
         early_stopper: Optional[EarlyStopper] = None,
         save_dir_path: Path = DEFAULT_SAVE_PATH,
-        logger: logging.Logger = logging.getLogger(__name__),
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         super().__init__(
             model_proxy=model_proxy,
@@ -36,7 +36,7 @@ class DefaultTrainer(BaseTrainer):
             early_stopper=early_stopper,
             save_dir_path=save_dir_path,
         )
-        self._logger: logging.Logger = logger
+        self._logger: logging.Logger = logger or logging.getLogger(__name__)
         self._validate_trainer_attrs()
 
     def train(self, max_epochs: int) -> TrainResult:

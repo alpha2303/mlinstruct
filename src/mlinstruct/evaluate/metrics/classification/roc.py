@@ -75,17 +75,13 @@ class ROC(BaseMetrics):
 
         Raises:
             IncompatibleDimsException: If the dimensions of y and y_pred do not match.
-            Exception: If an unexpected error occurs.
         """
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
-        try:
-            fpr, tpr, thresholds = _compute_roc_curve(y, y_pred)
-            auc = _compute_auc(fpr, tpr)
-            return cls(fpr, tpr, auc)
-        except Exception as e:
-            raise e
+        fpr, tpr, thresholds = _compute_roc_curve(y, y_pred)
+        auc = _compute_auc(fpr, tpr)
+        return cls(fpr, tpr, auc)
 
     def plot(
         self,

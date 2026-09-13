@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, Self
 
@@ -10,7 +9,6 @@ from ..utils.early_stopper import EarlyStopper
 from ..utils.checkpoint_writer import CheckpointWriter
 
 DEFAULT_SAVE_PATH: Path = Path("./Models")
-_TIMESTAMP_FORMAT: str = "%Y%m%d_%H%M"
 
 
 class BaseTrainer(ABC):
@@ -48,14 +46,6 @@ class BaseTrainer(ABC):
             Tuple[np.ndarray, np.ndarray]: The training and validation losses.
         """
         pass
-
-    def regenerate_model_save_path(self) -> None:
-        """Regenerate the model save path based on the current timestamp."""
-        self._model_save_dir_path = self._root_save_dir_path.joinpath(
-            datetime.now().strftime(_TIMESTAMP_FORMAT)
-        )
-        if not self._model_save_dir_path.exists():
-            self._model_save_dir_path.mkdir(parents=True)
 
     def add_early_stop(self, patience: int = 2, min_delta: float = 0.01) -> Self:
         """Add early stopping to the trainer.

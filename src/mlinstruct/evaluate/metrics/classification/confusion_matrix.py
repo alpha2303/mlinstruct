@@ -62,7 +62,6 @@ class ConfusionMatrix(BaseMetrics):
         Raises:
             IncompatibleDimsException: If the dimensions of y and y_pred do not match.
             IncompatibleValuesException: If the values in y and y_pred are not compatible.
-            Exception: If an unexpected error occurs.
         """
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
@@ -70,13 +69,10 @@ class ConfusionMatrix(BaseMetrics):
         if not MetricUtils.is_valid_input_values(y, y_pred):
             raise IncompatibleValuesException()
 
-        try:
-            confusion_matrix = _compute_confusion_matrix(y, y_pred, len(np.unique(y)))
-            return cls(confusion_matrix, class_labels)
-        except Exception as e:
-            raise e
+        confusion_matrix = _compute_confusion_matrix(y, y_pred, len(np.unique(y)))
+        return cls(confusion_matrix, class_labels)
 
-    def as_ndarray(self) -> Optional[np.ndarray]:
+    def as_ndarray(self) -> np.ndarray:
         """
         Get the confusion matrix as a NumPy array.
 

@@ -51,13 +51,9 @@ class TorchModelProxy(BaseModelProxy):
         Args:
             model_file_path (Path): The path to the model file.
         """
-        try:
-            checkpoint = torch.load(model_file_path)
-            self._model.load_state_dict(checkpoint["model_state_dict"])
-            self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        except Exception as e:
-            raise e
-
+        checkpoint = torch.load(model_file_path)
+        self._model.load_state_dict(checkpoint["model_state_dict"])
+        self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self._model.eval()
 
     def save_weights(
@@ -140,19 +136,16 @@ class TorchModelProxy(BaseModelProxy):
             )
 
         running_loss = 0.0
-        try:
-            self._model.train()
-            for _, data in enumerate(train_data):
-                X_batch, Y_batch = data
-                Y_pred = self._model(X_batch)
-                loss = self._loss_fn(Y_pred, Y_batch)
-                self._optimizer.zero_grad()
-                loss.backward()
-                self._optimizer.step()
+        self._model.train()
+        for _, data in enumerate(train_data):
+            X_batch, Y_batch = data
+            Y_pred = self._model(X_batch)
+            loss = self._loss_fn(Y_pred, Y_batch)
+            self._optimizer.zero_grad()
+            loss.backward()
+            self._optimizer.step()
 
-                running_loss += loss.item()
-        except Exception as e:
-            raise e
+            running_loss += loss.item()
 
         return running_loss / len(train_data)
 
@@ -175,16 +168,13 @@ class TorchModelProxy(BaseModelProxy):
 
         running_vloss: float = 0.0
 
-        try:
-            self._model.eval()
-            with torch.no_grad():
-                for _, vdata in enumerate(test_data):
-                    vX_batch, vY_batch = vdata
-                    vY_pred: torch.Tensor = self._model(vX_batch)
-                    vloss = self._loss_fn(vY_pred, vY_batch)
-                    running_vloss += vloss.item()
-        except Exception as e:
-            raise e
+        self._model.eval()
+        with torch.no_grad():
+            for _, vdata in enumerate(test_data):
+                vX_batch, vY_batch = vdata
+                vY_pred: torch.Tensor = self._model(vX_batch)
+                vloss = self._loss_fn(vY_pred, vY_batch)
+                running_vloss += vloss.item()
 
         return running_vloss / len(test_data)
 
