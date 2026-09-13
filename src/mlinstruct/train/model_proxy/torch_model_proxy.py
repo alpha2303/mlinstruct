@@ -44,6 +44,8 @@ class TorchModelProxy(BaseModelProxy):
         amp_dtype (Optional[torch.dtype], optional): The autocast dtype to use when
             use_amp is True. Defaults to bfloat16 if the device is CUDA and supports
             it, else float16 on CUDA or bfloat16 on CPU.
+        max_grad_norm (Optional[float], optional): If set, gradients are clipped to
+            this max norm before each optimizer step. Defaults to None (no clipping).
 
     """
 
@@ -57,6 +59,7 @@ class TorchModelProxy(BaseModelProxy):
         device: str | torch.device | None = None,
         use_amp: bool = False,
         amp_dtype: torch.dtype | None = None,
+        max_grad_norm: float | None = None,
     ) -> None:
         self._device = resolve_device(device)
         self._model = model.to(self._device)
@@ -66,6 +69,7 @@ class TorchModelProxy(BaseModelProxy):
         self._model_name = model_name or type(model).__name__
         self._use_amp = use_amp
         self._amp_dtype = amp_dtype or self._default_amp_dtype()
+        self._max_grad_norm = max_grad_norm
         self._scaler = torch.amp.GradScaler(
             self._device.type, enabled=use_amp and self._amp_dtype == torch.float16
         )
@@ -217,6 +221,11 @@ class TorchModelProxy(BaseModelProxy):
                 loss = self._loss_fn(Y_pred, Y_batch)
 
             self._scaler.scale(loss).backward()
+
+            if self._max_grad_norm is not None:
+                self._scaler.unscale_(self._optimizer)
+                nn.utils.clip_grad_norm_(self._model.parameters(), self._max_grad_norm)
+
             self._scaler.step(self._optimizer)
             self._scaler.update()
 

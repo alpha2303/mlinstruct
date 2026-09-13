@@ -260,6 +260,30 @@ def test_checkpoint_roundtrips_scaler_state(tiny_model, tiny_loaders, save_dir):
     assert proxy._scaler.state_dict() == original_scaler_state
 
 
+def test_grad_norm_is_clipped(tiny_model, tiny_loaders):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=100.0)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), max_grad_norm=0.5
+    )
+
+    proxy.train_one_epoch(train_loader)
+
+    grads = [p.grad.norm() for p in proxy._model.parameters() if p.grad is not None]
+    total_norm = torch.norm(torch.stack(grads))
+
+    assert total_norm.item() <= 0.5 + 1e-4
+
+
+def test_no_clipping_when_none(proxy, tiny_loaders, mocker):
+    train_loader, _, _ = tiny_loaders
+    clip_spy = mocker.spy(nn.utils, "clip_grad_norm_")
+
+    proxy.train_one_epoch(train_loader)
+
+    clip_spy.assert_not_called()
+
+
 def test_lazy_import_returns_same_class_twice():
     from mlinstruct.train.model_proxy import TorchModelProxy as first_import
     from mlinstruct.train.model_proxy import TorchModelProxy as second_import
