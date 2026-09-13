@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 
 class BaseDataPayload(ABC):
@@ -8,7 +8,8 @@ class BaseDataPayload(ABC):
     Training data, validation data, and optional test data are provided as input.
 
     - Training Data: Data used to train the learning model.
-    - Validation Data: Data used to validate the learning model during training for hyperparameters tuning.
+    - Validation Data: Data used to validate the learning model during training
+      for hyperparameters tuning.
     - Test Data: Data used to test the model post-training, and is an optional step.
 
     Args:
@@ -21,11 +22,11 @@ class BaseDataPayload(ABC):
         self,
         train_data: Iterable,
         val_data: Iterable,
-        test_data: Optional[Iterable] = None,
+        test_data: Iterable | None = None,
     ):
-        self.__train_data = train_data
-        self.__val_data = val_data
-        self.__test_data = test_data
+        self._train_data = train_data
+        self._val_data = val_data
+        self._test_data = test_data
 
     def get_train_data(self) -> Iterable:
         """Get the training data.
@@ -33,7 +34,7 @@ class BaseDataPayload(ABC):
         Returns:
             Iterable: The training data.
         """
-        return self.__train_data
+        return self._train_data
 
     def get_val_data(self) -> Iterable:
         """Get the validation data.
@@ -41,15 +42,15 @@ class BaseDataPayload(ABC):
         Returns:
             Iterable: The validation data.
         """
-        return self.__val_data
+        return self._val_data
 
-    def get_test_data(self) -> Optional[Iterable]:
+    def get_test_data(self) -> Iterable | None:
         """Get the test data.
 
         Returns:
             Optional[Iterable]: The test data if exists, else None.
         """
-        return self.__test_data
+        return self._test_data
 
     def has_test_data(self) -> bool:
         """Check if test data is available.
@@ -57,9 +58,9 @@ class BaseDataPayload(ABC):
         Returns:
             bool: True if test data is available, False otherwise.
         """
-        return self.__test_data is not None
+        return self._test_data is not None
 
     @abstractmethod
-    def __validate_input_data(self, *args, **kwargs) -> None:
+    def _validate_input_data(self, *args, **kwargs) -> None:
         """Validate the input data."""
         pass

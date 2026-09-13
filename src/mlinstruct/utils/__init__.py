@@ -1,4 +1,3 @@
-from . import exception
-from . import funcs
+from mlinstruct.utils import exception, optional_deps
 
-__all__ = ["exception", "funcs"]
+__all__ = ["exception", "optional_deps"]

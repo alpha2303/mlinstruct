@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  test-torch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --extra torch --group test --group dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Type check (non-blocking)
+        run: uv run pyright || true
+
+      - name: Test
+        run: uv run pytest --cov-fail-under=75
+
+      - name: Run example
+        run: uv run python examples/toy_regression.py
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies (no torch extra)
+        run: uv sync --group test
+
+      - name: Test
+        run: uv run pytest

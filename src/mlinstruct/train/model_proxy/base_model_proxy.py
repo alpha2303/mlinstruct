@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 
 class BaseModelProxy(ABC):
@@ -14,25 +14,31 @@ class BaseModelProxy(ABC):
     """
 
     @abstractmethod
-    def load_weights(self, model_file_path: Path) -> None:
-        """Load model weights from a saved model checkpoint file.
+    def load_checkpoint(self, model_file_path: Path) -> int:
+        """Load model, optimizer, and scheduler state from a checkpoint file.
 
         Args:
-            model_file_path (Path): The path to the model file.
+            model_file_path (Path): The path to the checkpoint file.
+
+        Returns:
+            int: The epoch recorded in the checkpoint.
         """
         pass
 
     @abstractmethod
     def save_weights(
         self, epoch: int, save_dir_path: Path, model_name: str, *args, **kwargs
-    ) -> None:
+    ) -> Path:
         """
         Save model weights to a file.
 
         Args:
             epoch (int): The current epoch number.
             save_folder_path (Path): The folder path to save the model weights.
-            model_name (str): The name of the model.
+            model_name (str): The stem of the checkpoint filename, without extension.
+
+        Returns:
+            Path: The path the checkpoint was written to.
         """
         pass
 

@@ -1,8 +1,6 @@
-from . import data_payload
-from . import model_proxy
-from . import trainer
-from . import utils
-from .train_result import TrainResult
+from mlinstruct.train import data_payload, model_proxy, trainer, utils
+from mlinstruct.train.callbacks import TrainerCallback
+from mlinstruct.train.train_result import TrainResult
 
 __all__ = [
     "data_payload",
@@ -10,4 +8,5 @@ __all__ = [
     "trainer",
     "utils",
     "TrainResult",
+    "TrainerCallback",
 ]

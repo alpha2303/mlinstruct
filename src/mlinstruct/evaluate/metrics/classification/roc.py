@@ -1,17 +1,17 @@
-from typing import Self, Optional
+from typing import Self
 
-import numpy as np
-from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
+from sklearn.metrics import auc, roc_curve
 
-from ..base_metrics import BaseMetrics
-from ..metric_utils import MetricUtils
-from ...plots.roc_plotter import ROCPlotter
-from ....utils.exception import IncompatibleDimsException
+from mlinstruct.evaluate.metrics.base_metrics import BaseMetrics
+from mlinstruct.evaluate.metrics.metric_utils import MetricUtils
+from mlinstruct.evaluate.plots.roc_plotter import ROCPlotter
+from mlinstruct.utils.exception import IncompatibleDimsException
 
 
-def __compute_roc_curve(
+def _compute_roc_curve(
     truth_array: np.ndarray, pred_array: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -22,12 +22,13 @@ def __compute_roc_curve(
         pred_array (numpy.ndarray): The predicted labels.
 
     Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray]: The false positive rate, true positive rate, and thresholds.
+        tuple[np.ndarray, np.ndarray, np.ndarray]: The false positive rate, true positive
+            rate, and thresholds.
     """
     return roc_curve(truth_array, pred_array)
 
 
-def __compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
+def _compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
     """
     Compute the area under the ROC curve (AUC).
 
@@ -38,7 +39,7 @@ def __compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
     Returns:
         float: The computed AUC.
     """
-    return np.trapz(tpr, fpr)
+    return auc(fpr, tpr)
 
 
 class ROC(BaseMetrics):
@@ -53,9 +54,9 @@ class ROC(BaseMetrics):
     """
 
     def __init__(self, fpr: np.ndarray, tpr: np.ndarray, auc: float):
-        self.__fpr: np.ndarray = fpr
-        self.__tpr: np.ndarray = tpr
-        self.__auc: float = auc
+        self._fpr: np.ndarray = fpr
+        self._tpr: np.ndarray = tpr
+        self._auc: float = auc
 
     @classmethod
     def from_predictions(
@@ -75,24 +76,20 @@ class ROC(BaseMetrics):
 
         Raises:
             IncompatibleDimsException: If the dimensions of y and y_pred do not match.
-            Exception: If an unexpected error occurs.
         """
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
-        try:
-            fpr, tpr, thresholds = __compute_roc_curve(y, y_pred)
-            auc = __compute_auc(fpr, tpr)
-            return cls(fpr, tpr, auc)
-        except Exception as e:
-            raise e
+        fpr, tpr, thresholds = _compute_roc_curve(y, y_pred)
+        auc = _compute_auc(fpr, tpr)
+        return cls(fpr, tpr, auc)
 
     def plot(
         self,
         title: str = "Receiver operating characteristic (ROC) curve",
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         **kwargs,
     ) -> Axes:
         """
@@ -108,6 +105,6 @@ class ROC(BaseMetrics):
         if ax is None:
             _, ax = plt.subplots()
 
-        return ROCPlotter(
-            title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name
-        ).plot(ax, self.__fpr, self.__tpr, self.__auc, **kwargs)
+        return ROCPlotter(title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name).plot(
+            ax, self._fpr, self._tpr, self._auc, **kwargs
+        )

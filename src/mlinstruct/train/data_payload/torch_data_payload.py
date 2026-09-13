@@ -1,12 +1,6 @@
-from typing import Optional
-
-from ...utils.funcs import is_dependency_installed
-if not is_dependency_installed("torch"):
-    raise ImportError("Torch is not available")
-
-from ..data_payload.base_data_payload import BaseDataPayload
-
 from torch.utils.data import DataLoader
+
+from mlinstruct.train.data_payload.base_data_payload import BaseDataPayload
 
 
 class TorchDataPayload(BaseDataPayload):
@@ -25,18 +19,16 @@ class TorchDataPayload(BaseDataPayload):
         self,
         train_data: DataLoader,
         val_data: DataLoader,
-        test_data: Optional[DataLoader] = None,
+        test_data: DataLoader | None = None,
     ):
-        self.__validate_input_data(
-            train_data=train_data, val_data=val_data, test_data=test_data
-        )
+        self._validate_input_data(train_data=train_data, val_data=val_data, test_data=test_data)
         super().__init__(train_data=train_data, val_data=val_data, test_data=test_data)
 
-    def __validate_input_data(
+    def _validate_input_data(
         self,
         train_data: DataLoader,
         val_data: DataLoader,
-        test_data: Optional[DataLoader],
+        test_data: DataLoader | None,
         **kwargs,
     ) -> None:
         """

@@ -1,17 +1,17 @@
-from typing import List, Self, Optional
+from typing import Self
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-from ..base_metrics import BaseMetrics
-from ..metric_utils import MetricUtils
-from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
-from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
+from mlinstruct.evaluate.metrics.base_metrics import BaseMetrics
+from mlinstruct.evaluate.metrics.metric_utils import MetricUtils
+from mlinstruct.evaluate.plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
+from mlinstruct.utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 
-def __compute_confusion_matrix(
+def _compute_confusion_matrix(
     truth_array: np.ndarray, pred_array: np.ndarray, class_count: int
 ) -> np.ndarray:
     """Compute the confusion matrix.
@@ -21,11 +21,8 @@ def __compute_confusion_matrix(
         pred_array (numpy.ndarray): The predicted labels.
         class_count (int): The number of classes.
     """
-    confusion_matrix: np.ndarray = np.zeros((class_count, class_count)).astype(int)
-
-    for i in range(len(truth_array)):
-        confusion_matrix[truth_array[i], pred_array[i]] += 1
-
+    confusion_matrix: np.ndarray = np.zeros((class_count, class_count), dtype=int)
+    np.add.at(confusion_matrix, (truth_array, pred_array), 1)
     return confusion_matrix
 
 
@@ -38,15 +35,17 @@ class ConfusionMatrix(BaseMetrics):
         class_labels (list, optional): The class labels.
     """
 
-    def __init__(
-        self, confusion_matrix: np.ndarray, class_labels: Optional[List[str]] = None
-    ):
-        self.__confusion_matrix: np.ndarray = confusion_matrix
-        self.__class_labels: Optional[List[str]] = class_labels
+    def __init__(self, confusion_matrix: np.ndarray, class_labels: list[str] | None = None):
+        self._confusion_matrix: np.ndarray = confusion_matrix
+        self._class_labels: list[str] | None = class_labels
 
     @classmethod
     def from_predictions(
-        cls, y: np.ndarray, y_pred: np.ndarray, class_labels: Optional[list] = None
+        cls,
+        y: np.ndarray,
+        y_pred: np.ndarray,
+        num_classes: int | None = None,
+        class_labels: list | None = None,
     ) -> Self:
         """
         Create an instance of the ConfusionMatrix from the true and predicted values.
@@ -54,6 +53,8 @@ class ConfusionMatrix(BaseMetrics):
         Args:
             y (numpy.ndarray): The true labels.
             y_pred (numpy.ndarray): The predicted labels.
+            num_classes (int, optional): The number of classes. Defaults to
+                max(y.max(), y_pred.max()) + 1.
             class_labels (list, optional): The class labels.
 
         Returns:
@@ -62,21 +63,23 @@ class ConfusionMatrix(BaseMetrics):
         Raises:
             IncompatibleDimsException: If the dimensions of y and y_pred do not match.
             IncompatibleValuesException: If the values in y and y_pred are not compatible.
-            Exception: If an unexpected error occurs.
         """
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
-        if not MetricUtils.is_valid_input_values(y, y_pred):
+        if y.shape[0] == 0:
             raise IncompatibleValuesException()
 
-        try:
-            confusion_matrix = __compute_confusion_matrix(y, y_pred, len(np.unique(y)))
-            return cls(confusion_matrix, class_labels)
-        except Exception as e:
-            raise e
+        if num_classes is None:
+            num_classes = int(max(y.max(), y_pred.max())) + 1
 
-    def as_ndarray(self) -> Optional[np.ndarray]:
+        if not MetricUtils.is_valid_input_values(y, y_pred, num_classes=num_classes):
+            raise IncompatibleValuesException()
+
+        confusion_matrix = _compute_confusion_matrix(y, y_pred, num_classes)
+        return cls(confusion_matrix, class_labels)
+
+    def as_ndarray(self) -> np.ndarray:
         """
         Get the confusion matrix as a NumPy array.
 
@@ -85,14 +88,14 @@ class ConfusionMatrix(BaseMetrics):
         Returns:
             numpy.ndarray: The confusion matrix.
         """
-        return self.__confusion_matrix
+        return self._confusion_matrix
 
     def plot(
         self,
         title: str = "Confusion Matrix",
         xaxis_name: str = "Predicted",
         yaxis_name: str = "True",
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         cmap: Colormap = DEFAULT_CMAP,
         **kwargs,
     ) -> Axes:
@@ -114,7 +117,7 @@ class ConfusionMatrix(BaseMetrics):
             title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name, cmap=cmap
         ).plot(
             ax=ax,
-            conf_matrix=self.__confusion_matrix,
-            class_labels=self.__class_labels,
+            conf_matrix=self._confusion_matrix,
+            class_labels=self._class_labels,
             **kwargs,
         )

@@ -1,4 +1,3 @@
-from . import metrics
-from . import plots
+from mlinstruct.evaluate import callbacks, metrics, plots
 
-__all__ = ["metrics", "plots"]
+__all__ = ["callbacks", "metrics", "plots"]
