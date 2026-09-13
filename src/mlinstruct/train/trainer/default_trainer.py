@@ -79,7 +79,7 @@ class DefaultTrainer(BaseTrainer):
                 val_loss_list.append(avg_vloss)
 
                 if self._model_proxy.has_scheduler():
-                    self._model_proxy.scheduler_step(avg_vloss=avg_loss)
+                    self._model_proxy.scheduler_step(avg_vloss=avg_vloss)
 
                 if avg_vloss < best_vloss:
                     best_vloss = avg_vloss
