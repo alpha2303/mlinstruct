@@ -1,9 +1,11 @@
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
 
 from ...utils.exception import TrainerError
+from ..callbacks import TrainerCallback
 from ..data_payload.base_data_payload import BaseDataPayload
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ..train_result import TrainResult
@@ -25,6 +27,9 @@ class DefaultTrainer(BaseTrainer):
             save_dir_path gets a numeric suffix.
         logger (Optional[logging.Logger]): Logger for logging training progress.
             Defaults to the module logger.
+        callbacks (Sequence[TrainerCallback]): Callbacks invoked at the start of
+            training, at the end of every epoch, and at the end of training.
+            Defaults to none.
     """
 
     def __init__(
@@ -35,6 +40,7 @@ class DefaultTrainer(BaseTrainer):
         save_dir_path: Path = DEFAULT_SAVE_PATH,
         run_name: str | None = None,
         logger: logging.Logger | None = None,
+        callbacks: Sequence[TrainerCallback] = (),
     ) -> None:
         super().__init__(
             model_proxy=model_proxy,
@@ -44,6 +50,7 @@ class DefaultTrainer(BaseTrainer):
             run_name=run_name,
         )
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
+        self._callbacks: Sequence[TrainerCallback] = callbacks
         self._validate_trainer_attrs()
 
     def train(self, max_epochs: int, resume_from: Path | None = None) -> TrainResult:
@@ -76,6 +83,9 @@ class DefaultTrainer(BaseTrainer):
         if resume_from is not None:
             start_epoch = self._model_proxy.load_checkpoint(resume_from) + 1
 
+        for callback in self._callbacks:
+            callback.on_train_start(self)
+
         epochs_completed: int = start_epoch - 1
         try:
             for epoch_index in range(start_epoch, max_epochs + 1):
@@ -91,6 +101,9 @@ class DefaultTrainer(BaseTrainer):
 
                 train_loss_list.append(avg_loss)
                 val_loss_list.append(avg_vloss)
+
+                for callback in self._callbacks:
+                    callback.on_epoch_end(self, epoch_index, avg_loss, avg_vloss)
 
                 if self._model_proxy.has_scheduler():
                     self._model_proxy.scheduler_step(avg_vloss=avg_vloss)
@@ -118,7 +131,12 @@ class DefaultTrainer(BaseTrainer):
             model_save_path = self._checkpoint_writer.get_model_save_path().resolve()  # type: ignore
             self._logger.info(f"Model checkpoints saved to {model_save_path}")
 
-            return TrainResult(
+            metrics_history: dict[str, list[float]] = {}
+            for callback in self._callbacks:
+                if hasattr(callback, "history"):
+                    metrics_history.update(callback.history)
+
+            result = TrainResult(
                 model_name=self._model_proxy.get_model_name(),
                 model_save_path=model_save_path,
                 epochs=epochs_completed,
@@ -127,7 +145,13 @@ class DefaultTrainer(BaseTrainer):
                 best_val_loss=best_vloss,
                 best_checkpoint_path=best_checkpoint_path,
                 stopped_early=stopped_early,
+                metrics_history=metrics_history,
             )
+
+            for callback in self._callbacks:
+                callback.on_train_end(self, result)
+
+            return result
 
         except Exception as e:
             self._logger.error(f"Error during training: {str(e)}")

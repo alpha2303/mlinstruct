@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -16,6 +16,8 @@ class TrainResult:
         best_checkpoint_path (Optional[Path]): The path to the best checkpoint written,
             or None if no checkpoint was written.
         stopped_early (bool): Whether training stopped early via the EarlyStopper.
+        metrics_history (dict[str, list[float]]): Per-epoch metric values collected
+            from any MetricsCallback-like callbacks. Empty if none were used.
     """
 
     model_name: str
@@ -26,3 +28,4 @@ class TrainResult:
     best_val_loss: float
     best_checkpoint_path: Path | None
     stopped_early: bool
+    metrics_history: dict[str, list[float]] = field(default_factory=dict)

@@ -1,13 +1,30 @@
 import logging
 
+import numpy as np
 import pytest
 import torch
 from torch import optim
 
+from mlinstruct.evaluate.callbacks import MetricsCallback
+from mlinstruct.train.callbacks import TrainerCallback
 from mlinstruct.train.data_payload import TorchDataPayload
 from mlinstruct.train.model_proxy import TorchModelProxy
 from mlinstruct.train.trainer import DefaultTrainer, default_trainer
 from mlinstruct.utils.exception import TrainerError
+
+
+class RecordingCallback(TrainerCallback):
+    def __init__(self) -> None:
+        self.events: list[str] = []
+
+    def on_train_start(self, trainer) -> None:
+        self.events.append("start")
+
+    def on_epoch_end(self, trainer, epoch, train_loss, val_loss) -> None:
+        self.events.append(f"epoch_end:{epoch}")
+
+    def on_train_end(self, trainer, result) -> None:
+        self.events.append("end")
 
 
 def test_scheduler_step_receives_val_loss(tiny_model, tiny_loaders, save_dir, mocker):
@@ -146,3 +163,52 @@ def test_resume_continues_from_saved_epoch(tiny_model, tiny_loaders, save_dir, m
 
     assert second_result.epochs == 4
     assert len(second_result.train_loss_list) == 2
+
+
+def test_callbacks_invoked_in_order(proxy, payload, save_dir):
+    callback = RecordingCallback()
+    trainer = DefaultTrainer(
+        model_proxy=proxy, data_payload=payload, save_dir_path=save_dir, callbacks=[callback]
+    )
+
+    trainer.train(max_epochs=2)
+
+    assert callback.events == ["start", "epoch_end:1", "epoch_end:2", "end"]
+
+
+def test_metrics_callback_history_length_equals_epochs(tiny_model, tiny_loaders, save_dir):
+    train_loader, val_loader, _ = tiny_loaders
+    data_payload = TorchDataPayload(train_data=train_loader, val_data=val_loader)
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(model=tiny_model, optimizer=optimizer, loss_fn=torch.nn.MSELoss())
+
+    callback = MetricsCallback(
+        metrics={"mae": lambda y, y_pred: float(np.mean(np.abs(y - y_pred)))},
+        loader=val_loader,
+    )
+    trainer = DefaultTrainer(
+        model_proxy=proxy, data_payload=data_payload, save_dir_path=save_dir, callbacks=[callback]
+    )
+
+    trainer.train(max_epochs=3)
+
+    assert len(callback.history["mae"]) == 3
+
+
+def test_metrics_history_in_train_result(tiny_model, tiny_loaders, save_dir):
+    train_loader, val_loader, _ = tiny_loaders
+    data_payload = TorchDataPayload(train_data=train_loader, val_data=val_loader)
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(model=tiny_model, optimizer=optimizer, loss_fn=torch.nn.MSELoss())
+
+    callback = MetricsCallback(
+        metrics={"mae": lambda y, y_pred: float(np.mean(np.abs(y - y_pred)))},
+        loader=val_loader,
+    )
+    trainer = DefaultTrainer(
+        model_proxy=proxy, data_payload=data_payload, save_dir_path=save_dir, callbacks=[callback]
+    )
+
+    result = trainer.train(max_epochs=2)
+
+    assert result.metrics_history == callback.history

@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import torch
 from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
@@ -259,6 +260,35 @@ class TorchModelProxy(BaseModelProxy):
                 running_vloss += vloss.item()
 
         return running_vloss / len(test_data)
+
+    def predict(self, data: Iterable) -> tuple[np.ndarray, np.ndarray]:
+        """Run inference over a DataLoader and collect true/predicted values.
+
+        Args:
+            data (Iterable): The data loader to predict over.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: The concatenated (y_true, y_pred) arrays,
+                moved to CPU.
+
+        Raises:
+            ModelProxyError: If data is not a DataLoader instance.
+        """
+        if not isinstance(data, DataLoader):
+            raise ModelProxyError("Predict Input is not an instance of torch.utils.data.DataLoader")
+
+        y_true_batches = []
+        y_pred_batches = []
+
+        self._model.eval()
+        with torch.inference_mode():
+            for batch in data:
+                X_batch, Y_batch = move_to_device(batch, self._device)
+                Y_pred = self._model(X_batch)
+                y_true_batches.append(Y_batch.cpu().numpy())
+                y_pred_batches.append(Y_pred.cpu().numpy())
+
+        return np.concatenate(y_true_batches), np.concatenate(y_pred_batches)
 
     def get_model_name(self) -> str:
         """Get the name of the model.

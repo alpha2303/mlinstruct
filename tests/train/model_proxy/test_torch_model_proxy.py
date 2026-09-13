@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 import torchinfo
@@ -282,6 +283,17 @@ def test_no_clipping_when_none(proxy, tiny_loaders, mocker):
     proxy.train_one_epoch(train_loader)
 
     clip_spy.assert_not_called()
+
+
+def test_predict_shapes_and_no_grad(proxy, tiny_loaders):
+    _, val_loader, _ = tiny_loaders
+
+    y_true, y_pred = proxy.predict(val_loader)
+
+    assert isinstance(y_true, np.ndarray)
+    assert isinstance(y_pred, np.ndarray)
+    assert y_true.shape == y_pred.shape
+    assert y_true.shape[0] == 16
 
 
 def test_lazy_import_returns_same_class_twice():

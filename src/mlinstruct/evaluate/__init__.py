@@ -1,3 +1,3 @@
-from . import metrics, plots
+from . import callbacks, metrics, plots
 
-__all__ = ["metrics", "plots"]
+__all__ = ["callbacks", "metrics", "plots"]
