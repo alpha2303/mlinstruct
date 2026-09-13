@@ -26,6 +26,7 @@ class TorchModelProxy(BaseModelProxy):
         optimizer (torch.optim.Optimizer): The optimizer for training the model.
         loss_fn (torch.nn.modules.loss._Loss): The loss function for training the model.
         scheduler (Optional[torch.optim.lr_scheduler.LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
+        model_name (Optional[str], optional): The name of the model. Defaults to the model class name.
 
     """
 
@@ -35,11 +36,13 @@ class TorchModelProxy(BaseModelProxy):
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.modules.loss._Loss,
         scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
+        model_name: Optional[str] = None,
     ) -> None:
         self._model = model
         self._optimizer = optimizer
         self._loss_fn = loss_fn
         self._scheduler = scheduler
+        self._model_name = model_name or type(model).__name__
         super().__init__()
 
     def load_weights(self, model_file_path: Path) -> None:
@@ -182,6 +185,14 @@ class TorchModelProxy(BaseModelProxy):
             raise e
 
         return running_vloss / len(test_data)
+
+    def get_model_name(self) -> str:
+        """Get the name of the model.
+
+        Returns:
+            str: The name of the model.
+        """
+        return self._model_name
 
     def summary(self) -> torchinfo.ModelStatistics:
         """Get a summary of the model architecture.
