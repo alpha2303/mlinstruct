@@ -36,15 +36,15 @@ class LossPlotter(BasePlotter):
         add_legend: bool = True,
         legend_loc: str = "upper right",
     ):
-        self.__title: str = title
-        self.__xaxis_name: str = xaxis_name
-        self.__yaxis_name: str = yaxis_name
-        self.__train_color: str = train_color
-        self.__train_label: str = train_label
-        self.__val_color: str = val_color
-        self.__val_label: str = val_label
-        self.__add_legend: bool = add_legend
-        self.__legend_loc: str = legend_loc
+        self._title: str = title
+        self._xaxis_name: str = xaxis_name
+        self._yaxis_name: str = yaxis_name
+        self._train_color: str = train_color
+        self._train_label: str = train_label
+        self._val_color: str = val_color
+        self._val_label: str = val_label
+        self._add_legend: bool = add_legend
+        self._legend_loc: str = legend_loc
 
     def plot(
         self,
@@ -64,17 +64,17 @@ class LossPlotter(BasePlotter):
         Returns:
             matplotlib.axes.Axes: The axes object with the plotted data.
         """
-        ax.plot(train_losses, color=self.__train_color, label=self.__train_label)
+        ax.plot(train_losses, color=self._train_color, label=self._train_label)
         if val_losses is not None:
-            ax.plot(val_losses, color=self.__val_color, label=self.__val_label)
-        ax.set_title(self.__title)
-        ax.set_xlabel(self.__xaxis_name)
-        ax.set_ylabel(self.__yaxis_name)
+            ax.plot(val_losses, color=self._val_color, label=self._val_label)
+        ax.set_title(self._title)
+        ax.set_xlabel(self._xaxis_name)
+        ax.set_ylabel(self._yaxis_name)
 
-        if self.__add_legend:
-            labels = [self.__train_label]
+        if self._add_legend:
+            labels = [self._train_label]
             if val_losses is not None:
-                labels.append(self.__val_label)
-            ax.legend(labels, loc=self.__legend_loc)
+                labels.append(self._val_label)
+            ax.legend(labels, loc=self._legend_loc)
 
         return ax

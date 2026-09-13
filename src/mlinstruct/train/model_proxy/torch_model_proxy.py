@@ -36,10 +36,10 @@ class TorchModelProxy(BaseModelProxy):
         loss_fn: torch.nn.modules.loss._Loss,
         scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
     ) -> None:
-        self.__model = model
-        self.__optimizer = optimizer
-        self.__loss_fn = loss_fn
-        self.__scheduler = scheduler
+        self._model = model
+        self._optimizer = optimizer
+        self._loss_fn = loss_fn
+        self._scheduler = scheduler
         super().__init__()
 
     def load_weights(self, model_file_path: Path) -> None:
@@ -50,12 +50,12 @@ class TorchModelProxy(BaseModelProxy):
         """
         try:
             checkpoint = torch.load(model_file_path)
-            self.__model.load_state_dict(checkpoint["model_state_dict"])
-            self.__optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            self._model.load_state_dict(checkpoint["model_state_dict"])
+            self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         except Exception as e:
             raise e
 
-        self.__model.eval()
+        self._model.eval()
 
     def save_weights(
         self, epoch: int, save_dir_path: Path, model_name: str, loss: float, **kwargs
@@ -76,8 +76,8 @@ class TorchModelProxy(BaseModelProxy):
         try:
             model_object = {
                 "epoch": epoch,
-                "model_state_dict": self.__model.state_dict(),
-                "optimizer_state_dict": self.__optimizer.state_dict(),
+                "model_state_dict": self._model.state_dict(),
+                "optimizer_state_dict": self._optimizer.state_dict(),
                 "loss": loss,
             }
 
@@ -91,7 +91,7 @@ class TorchModelProxy(BaseModelProxy):
         Returns:
             float: The current learning rate.
         """
-        return self.__optimizer.param_groups[0]["lr"]
+        return self._optimizer.param_groups[0]["lr"]
 
     def has_scheduler(self) -> bool:
         """Check if the model has a learning rate scheduler set up.
@@ -99,7 +99,7 @@ class TorchModelProxy(BaseModelProxy):
         Returns:
             bool: True if the model has a scheduler, False otherwise.
         """
-        return isinstance(self.__scheduler, torch.optim.lr_scheduler.LRScheduler)
+        return isinstance(self._scheduler, torch.optim.lr_scheduler.LRScheduler)
 
     def scheduler_step(self, avg_vloss: float) -> None:
         """Perform a step of the learning rate scheduler if it exists.
@@ -112,10 +112,10 @@ class TorchModelProxy(BaseModelProxy):
                 "Model Proxy does not have a valid scheduler configured."
             )
 
-        if isinstance(self.__scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            self.__scheduler.step(avg_vloss)
+        if isinstance(self._scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            self._scheduler.step(avg_vloss)
         else:
-            self.__scheduler.step()  # type: ignore
+            self._scheduler.step()  # type: ignore
 
     def train_one_epoch(self, train_data: Iterable) -> float:
         """Train the model for one epoch.
@@ -136,14 +136,14 @@ class TorchModelProxy(BaseModelProxy):
 
         running_loss = 0.0
         try:
-            self.__model.train()
+            self._model.train()
             for _, data in enumerate(train_data):
                 X_batch, Y_batch = data
-                Y_pred = self.__model(X_batch)
-                loss = self.__loss_fn(Y_pred, Y_batch)
-                self.__optimizer.zero_grad()
+                Y_pred = self._model(X_batch)
+                loss = self._loss_fn(Y_pred, Y_batch)
+                self._optimizer.zero_grad()
                 loss.backward()
-                self.__optimizer.step()
+                self._optimizer.step()
 
                 running_loss += loss.item()
         except Exception as e:
@@ -171,12 +171,12 @@ class TorchModelProxy(BaseModelProxy):
         running_vloss: float = 0.0
 
         try:
-            self.__model.eval()
+            self._model.eval()
             with torch.no_grad():
                 for _, vdata in enumerate(test_data):
                     vX_batch, vY_batch = vdata
-                    vY_pred: torch.Tensor = self.__model(vX_batch)
-                    vloss = self.__loss_fn(vY_pred, vY_batch)
+                    vY_pred: torch.Tensor = self._model(vX_batch)
+                    vloss = self._loss_fn(vY_pred, vY_batch)
                     running_vloss += vloss.item()
         except Exception as e:
             raise e
@@ -189,4 +189,4 @@ class TorchModelProxy(BaseModelProxy):
         Returns:
             torchinfo.ModelStatistics: A summary of the model.
         """
-        return torchinfo.summary(self.__model)
+        return torchinfo.summary(self._model)

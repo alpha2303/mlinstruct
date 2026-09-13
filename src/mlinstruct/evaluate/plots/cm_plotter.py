@@ -26,10 +26,10 @@ class ConfusionMatrixPlotter(BasePlotter):
         yaxis_name: str = "True",
         cmap: Colormap = DEFAULT_CMAP,
     ):
-        self.__title: str = title
-        self.__xaxis_name: str = xaxis_name
-        self.__yaxis_name: str = yaxis_name
-        self.__cmap: Colormap = cmap
+        self._title: str = title
+        self._xaxis_name: str = xaxis_name
+        self._yaxis_name: str = yaxis_name
+        self._cmap: Colormap = cmap
 
     def plot(
         self,
@@ -66,10 +66,10 @@ class ConfusionMatrixPlotter(BasePlotter):
                 f"Number of class labels ({len(class_labels)}) do not match length of confusion matrix ({conf_matrix.shape[0]})."
             )
 
-        ax.matshow(conf_matrix, cmap=self.__cmap)
-        ax.set_xlabel(self.__xaxis_name)
-        ax.set_ylabel(self.__yaxis_name)
-        ax.set_title(self.__title)
+        ax.matshow(conf_matrix, cmap=self._cmap)
+        ax.set_xlabel(self._xaxis_name)
+        ax.set_ylabel(self._yaxis_name)
+        ax.set_title(self._title)
         ax.tick_params(
             axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
         )
@@ -86,14 +86,14 @@ class ConfusionMatrixPlotter(BasePlotter):
                     conf_matrix[i, j],
                     va="center",
                     ha="center",
-                    color=self.__get_text_color(conf_matrix, i, j),
+                    color=self._get_text_color(conf_matrix, i, j),
                 )
 
         ax.figure.subplots_adjust(right=1.0)
 
         return ax
 
-    def __get_text_color(
+    def _get_text_color(
         self, conf_matrix: np.ndarray, row_idx: int, col_idx: int
     ) -> str:
         """Determines the text color based on the cell value.

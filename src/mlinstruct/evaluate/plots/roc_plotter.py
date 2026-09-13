@@ -31,14 +31,14 @@ class ROCPlotter(BasePlotter):
         add_legend: bool = True,
         legend_loc: str = "lower right",
     ):
-        self.__title: str = title
-        self.__xaxis_name: str = xaxis_name
-        self.__yaxis_name: str = yaxis_name
-        self.__curve_color: str = curve_color
-        self.__baseline_color: str = baseline_color
-        self.__plot_label: str = plot_label
-        self.__add_legend: bool = add_legend
-        self.__legend_loc: str = legend_loc
+        self._title: str = title
+        self._xaxis_name: str = xaxis_name
+        self._yaxis_name: str = yaxis_name
+        self._curve_color: str = curve_color
+        self._baseline_color: str = baseline_color
+        self._plot_label: str = plot_label
+        self._add_legend: bool = add_legend
+        self._legend_loc: str = legend_loc
 
     def plot(
         self,
@@ -65,18 +65,18 @@ class ROCPlotter(BasePlotter):
         ax.plot(
             fpr,
             tpr,
-            color=self.__curve_color,
+            color=self._curve_color,
             lw=2,
-            label=(self.__plot_label + auc_label),
+            label=(self._plot_label + auc_label),
         )
-        ax.plot([0, 1], [0, 1], color=self.__baseline_color, lw=2, linestyle="--")
+        ax.plot([0, 1], [0, 1], color=self._baseline_color, lw=2, linestyle="--")
         ax.set_xlim((0.0, 1.0))
         ax.set_ylim((0.0, 1.05))
-        ax.set_xlabel(self.__xaxis_name)
-        ax.set_ylabel(self.__yaxis_name)
-        ax.set_title(self.__title)
+        ax.set_xlabel(self._xaxis_name)
+        ax.set_ylabel(self._yaxis_name)
+        ax.set_title(self._title)
 
-        if self.__add_legend:
-            ax.legend(loc=self.__legend_loc)
+        if self._add_legend:
+            ax.legend(loc=self._legend_loc)
 
         return ax

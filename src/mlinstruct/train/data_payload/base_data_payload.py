@@ -23,9 +23,9 @@ class BaseDataPayload(ABC):
         val_data: Iterable,
         test_data: Optional[Iterable] = None,
     ):
-        self.__train_data = train_data
-        self.__val_data = val_data
-        self.__test_data = test_data
+        self._train_data = train_data
+        self._val_data = val_data
+        self._test_data = test_data
 
     def get_train_data(self) -> Iterable:
         """Get the training data.
@@ -33,7 +33,7 @@ class BaseDataPayload(ABC):
         Returns:
             Iterable: The training data.
         """
-        return self.__train_data
+        return self._train_data
 
     def get_val_data(self) -> Iterable:
         """Get the validation data.
@@ -41,7 +41,7 @@ class BaseDataPayload(ABC):
         Returns:
             Iterable: The validation data.
         """
-        return self.__val_data
+        return self._val_data
 
     def get_test_data(self) -> Optional[Iterable]:
         """Get the test data.
@@ -49,7 +49,7 @@ class BaseDataPayload(ABC):
         Returns:
             Optional[Iterable]: The test data if exists, else None.
         """
-        return self.__test_data
+        return self._test_data
 
     def has_test_data(self) -> bool:
         """Check if test data is available.
@@ -57,9 +57,9 @@ class BaseDataPayload(ABC):
         Returns:
             bool: True if test data is available, False otherwise.
         """
-        return self.__test_data is not None
+        return self._test_data is not None
 
     @abstractmethod
-    def __validate_input_data(self, *args, **kwargs) -> None:
+    def _validate_input_data(self, *args, **kwargs) -> None:
         """Validate the input data."""
         pass

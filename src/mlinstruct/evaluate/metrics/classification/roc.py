@@ -11,7 +11,7 @@ from ...plots.roc_plotter import ROCPlotter
 from ....utils.exception import IncompatibleDimsException
 
 
-def __compute_roc_curve(
+def _compute_roc_curve(
     truth_array: np.ndarray, pred_array: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -27,7 +27,7 @@ def __compute_roc_curve(
     return roc_curve(truth_array, pred_array)
 
 
-def __compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
+def _compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
     """
     Compute the area under the ROC curve (AUC).
 
@@ -53,9 +53,9 @@ class ROC(BaseMetrics):
     """
 
     def __init__(self, fpr: np.ndarray, tpr: np.ndarray, auc: float):
-        self.__fpr: np.ndarray = fpr
-        self.__tpr: np.ndarray = tpr
-        self.__auc: float = auc
+        self._fpr: np.ndarray = fpr
+        self._tpr: np.ndarray = tpr
+        self._auc: float = auc
 
     @classmethod
     def from_predictions(
@@ -81,8 +81,8 @@ class ROC(BaseMetrics):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
         try:
-            fpr, tpr, thresholds = __compute_roc_curve(y, y_pred)
-            auc = __compute_auc(fpr, tpr)
+            fpr, tpr, thresholds = _compute_roc_curve(y, y_pred)
+            auc = _compute_auc(fpr, tpr)
             return cls(fpr, tpr, auc)
         except Exception as e:
             raise e
@@ -110,4 +110,4 @@ class ROC(BaseMetrics):
 
         return ROCPlotter(
             title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name
-        ).plot(ax, self.__fpr, self.__tpr, self.__auc, **kwargs)
+        ).plot(ax, self._fpr, self._tpr, self._auc, **kwargs)

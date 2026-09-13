@@ -27,12 +27,12 @@ class TorchDataPayload(BaseDataPayload):
         val_data: DataLoader,
         test_data: Optional[DataLoader] = None,
     ):
-        self.__validate_input_data(
+        self._validate_input_data(
             train_data=train_data, val_data=val_data, test_data=test_data
         )
         super().__init__(train_data=train_data, val_data=val_data, test_data=test_data)
 
-    def __validate_input_data(
+    def _validate_input_data(
         self,
         train_data: DataLoader,
         val_data: DataLoader,

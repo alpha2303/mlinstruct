@@ -11,7 +11,7 @@ from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
 from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 
-def __compute_confusion_matrix(
+def _compute_confusion_matrix(
     truth_array: np.ndarray, pred_array: np.ndarray, class_count: int
 ) -> np.ndarray:
     """Compute the confusion matrix.
@@ -41,8 +41,8 @@ class ConfusionMatrix(BaseMetrics):
     def __init__(
         self, confusion_matrix: np.ndarray, class_labels: Optional[List[str]] = None
     ):
-        self.__confusion_matrix: np.ndarray = confusion_matrix
-        self.__class_labels: Optional[List[str]] = class_labels
+        self._confusion_matrix: np.ndarray = confusion_matrix
+        self._class_labels: Optional[List[str]] = class_labels
 
     @classmethod
     def from_predictions(
@@ -71,7 +71,7 @@ class ConfusionMatrix(BaseMetrics):
             raise IncompatibleValuesException()
 
         try:
-            confusion_matrix = __compute_confusion_matrix(y, y_pred, len(np.unique(y)))
+            confusion_matrix = _compute_confusion_matrix(y, y_pred, len(np.unique(y)))
             return cls(confusion_matrix, class_labels)
         except Exception as e:
             raise e
@@ -85,7 +85,7 @@ class ConfusionMatrix(BaseMetrics):
         Returns:
             numpy.ndarray: The confusion matrix.
         """
-        return self.__confusion_matrix
+        return self._confusion_matrix
 
     def plot(
         self,
@@ -114,7 +114,7 @@ class ConfusionMatrix(BaseMetrics):
             title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name, cmap=cmap
         ).plot(
             ax=ax,
-            conf_matrix=self.__confusion_matrix,
-            class_labels=self.__class_labels,
+            conf_matrix=self._confusion_matrix,
+            class_labels=self._class_labels,
             **kwargs,
         )

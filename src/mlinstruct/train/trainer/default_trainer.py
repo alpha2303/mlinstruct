@@ -36,8 +36,8 @@ class DefaultTrainer(BaseTrainer):
             early_stopper=early_stopper,
             save_dir_path=save_dir_path,
         )
-        self.__logger: logging.Logger = logger
-        self.__validate_trainer_attrs()
+        self._logger: logging.Logger = logger
+        self._validate_trainer_attrs()
 
     def train(self, max_epochs: int) -> TrainResult:
         """Train the model.
@@ -58,72 +58,72 @@ class DefaultTrainer(BaseTrainer):
         best_vloss: float = np.inf
         train_loss_list, val_loss_list = [], []
 
-        self.__checkpoint_writer.regenerate_model_save_path()  # type: ignore
+        self._checkpoint_writer.regenerate_model_save_path()  # type: ignore
 
         epochs_completed: int = 0
         try:
             for epoch_index in range(1, max_epochs + 1):
-                avg_loss = self.__model_proxy.train_one_epoch(
-                    self.__data_payload.get_train_data()
+                avg_loss = self._model_proxy.train_one_epoch(
+                    self._data_payload.get_train_data()
                 )
 
-                avg_vloss = self.__model_proxy.validate(
-                    self.__data_payload.get_val_data()
+                avg_vloss = self._model_proxy.validate(
+                    self._data_payload.get_val_data()
                 )
 
-                self.__logger.info(
-                    f"Epoch {epoch_index}: Training Loss = {avg_loss} | Validation Loss = {avg_vloss} | Learning Rate = {self.__model_proxy.get_lr()}"
+                self._logger.info(
+                    f"Epoch {epoch_index}: Training Loss = {avg_loss} | Validation Loss = {avg_vloss} | Learning Rate = {self._model_proxy.get_lr()}"
                 )
 
                 train_loss_list.append(avg_loss)
                 val_loss_list.append(avg_vloss)
 
-                if self.__model_proxy.has_scheduler():
-                    self.__model_proxy.scheduler_step(avg_vloss=avg_loss)
+                if self._model_proxy.has_scheduler():
+                    self._model_proxy.scheduler_step(avg_vloss=avg_loss)
 
                 if avg_vloss < best_vloss:
                     best_vloss = avg_vloss
 
-                    self.__checkpoint_writer.create_checkpoint(
-                        self.__model_proxy, epoch_index, avg_vloss
+                    self._checkpoint_writer.create_checkpoint(
+                        self._model_proxy, epoch_index, avg_vloss
                     )
 
                 epochs_completed = epoch_index
 
-                if self.__early_stopper and self.__early_stopper.early_stop(avg_vloss):
-                    self.__logger.info(f"Early stop triggered at epoch: {epoch_index}")
+                if self._early_stopper and self._early_stopper.early_stop(avg_vloss):
+                    self._logger.info(f"Early stop triggered at epoch: {epoch_index}")
                     break
 
-            if self.__data_payload.has_test_data():
-                avg_tloss = self.__model_proxy.validate(
-                    self.__data_payload.get_test_data()  # type: ignore
+            if self._data_payload.has_test_data():
+                avg_tloss = self._model_proxy.validate(
+                    self._data_payload.get_test_data()  # type: ignore
                 )
-                self.__logger.info(f"Average Test Loss: {avg_tloss}")
+                self._logger.info(f"Average Test Loss: {avg_tloss}")
 
-            self.__logger.info(
-                f"Model checkpoints saved to {self.__checkpoint_writer.get_model_save_path().resolve()}"  # type: ignore
+            self._logger.info(
+                f"Model checkpoints saved to {self._checkpoint_writer.get_model_save_path().resolve()}"  # type: ignore
             )
 
             return TrainResult(
-                model_name=self.__model_proxy.get_model_name(),
-                model_save_path=self.__checkpoint_writer.get_model_save_path().resolve(),  # type: ignore
+                model_name=self._model_proxy.get_model_name(),
+                model_save_path=self._checkpoint_writer.get_model_save_path().resolve(),  # type: ignore
                 epochs=epochs_completed,
                 train_loss_list=train_loss_list,
                 val_loss_list=val_loss_list,
             )
 
         except Exception as e:
-            self.__logger.error(f"Error during training: {str(e)}")
+            self._logger.error(f"Error during training: {str(e)}")
             raise
 
-    def __validate_trainer_attrs(self) -> None:
+    def _validate_trainer_attrs(self) -> None:
         """Validate that all required trainer attributes are initialized.
 
         Raises:
             TrainerError: If any of the required trainer attributes are not initialized.
         """
-        if not isinstance(self.__model_proxy, BaseModelProxy):
+        if not isinstance(self._model_proxy, BaseModelProxy):
             raise TrainerError("Model proxy is not provided.")
 
-        if not isinstance(self.__data_payload, BaseDataPayload):
+        if not isinstance(self._data_payload, BaseDataPayload):
             raise TrainerError("Training Data Payload is not provided.")
