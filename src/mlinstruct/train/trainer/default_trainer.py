@@ -19,6 +19,9 @@ class DefaultTrainer(BaseTrainer):
         data_payload (BaseDataPayload): Data payload containing training, validation, and optional test data.
         early_stopper (Optional[EarlyStopper]): Early stopper for stopping training early.
         save_dir_path (Path): Root directory path for saving model checkpoints.
+        run_name (Optional[str]): Name for this run's checkpoint directory.
+            Defaults to a timestamp; a name that already exists under
+            save_dir_path gets a numeric suffix.
         logger (Optional[logging.Logger]): Logger for logging training progress. Defaults to the module logger.
     """
 
@@ -28,6 +31,7 @@ class DefaultTrainer(BaseTrainer):
         data_payload: BaseDataPayload,
         early_stopper: Optional[EarlyStopper] = None,
         save_dir_path: Path = DEFAULT_SAVE_PATH,
+        run_name: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         super().__init__(
@@ -35,6 +39,7 @@ class DefaultTrainer(BaseTrainer):
             data_payload=data_payload,
             early_stopper=early_stopper,
             save_dir_path=save_dir_path,
+            run_name=run_name,
         )
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
         self._validate_trainer_attrs()

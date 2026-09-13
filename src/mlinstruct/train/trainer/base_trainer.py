@@ -26,24 +26,26 @@ class BaseTrainer(ABC):
         data_payload: BaseDataPayload,
         early_stopper: Optional[EarlyStopper] = None,
         save_dir_path: Path = DEFAULT_SAVE_PATH,
+        run_name: Optional[str] = None,
     ) -> None:
         self._model_proxy: BaseModelProxy = model_proxy
         self._data_payload: BaseDataPayload = data_payload
         self._early_stopper: Optional[EarlyStopper] = early_stopper
         self._root_save_dir_path: Path = save_dir_path
         self._checkpoint_writer: CheckpointWriter = CheckpointWriter(
-            self._root_save_dir_path
+            self._root_save_dir_path, run_name=run_name
         )
 
     @abstractmethod
-    def train(self, max_epochs: int) -> TrainResult:
+    def train(self, max_epochs: int, resume_from: Optional[Path] = None) -> TrainResult:
         """Train the model.
 
         Args:
             max_epochs (int): The maximum number of training epochs.
+            resume_from (Optional[Path]): Path to a checkpoint to resume from.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The training and validation losses.
+            TrainResult: The result of the training process.
         """
         pass
 

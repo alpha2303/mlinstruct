@@ -25,3 +25,19 @@ def test_init_does_not_create_directory(save_dir):
     CheckpointWriter(root)
 
     assert not root.exists()
+
+
+def test_run_dir_uses_run_name(save_dir):
+    writer = CheckpointWriter(save_dir, run_name="my-run")
+    writer.regenerate_model_save_path()
+
+    assert writer.get_model_save_path() == save_dir / "my-run"
+
+
+def test_run_dir_collision_gets_suffix(save_dir):
+    (save_dir / "my-run").mkdir(parents=True)
+
+    writer = CheckpointWriter(save_dir, run_name="my-run")
+    writer.regenerate_model_save_path()
+
+    assert writer.get_model_save_path() == save_dir / "my-run_1"
