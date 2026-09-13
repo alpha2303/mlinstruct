@@ -24,11 +24,9 @@ class EarlyStopper:
         Returns:
             bool: True if training should be stopped, False otherwise.
         """
-        if vloss < self.min_vloss:
+        if vloss < self.min_vloss - self.min_delta:
             self.min_vloss = vloss
             self.counter = 0
-        elif vloss > (self.min_vloss + self.min_delta):
+        else:
             self.counter += 1
-            if self.counter >= self.patience:
-                return True
-        return False
+        return self.counter >= self.patience
