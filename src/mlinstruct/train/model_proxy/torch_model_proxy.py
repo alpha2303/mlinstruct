@@ -62,31 +62,33 @@ class TorchModelProxy(BaseModelProxy):
 
     def save_weights(
         self, epoch: int, save_dir_path: Path, model_name: str, loss: float, **kwargs
-    ) -> None:
+    ) -> Path:
         """Save model weights to a file.
 
         Args:
             epoch (int): The current epoch number.
             save_path (Path): The folder path to save the model weights.
-            model_name (str): The name of the model.
+            model_name (str): The stem of the checkpoint filename, without extension.
             loss (float): The current loss value.
+
+        Returns:
+            Path: The path the checkpoint was written to.
         """
         if not save_dir_path.exists():
             raise ModelProxyError(
                 "Model save path does not exist. If you are running the save method directly, ensure that the save path is valid."
             )
 
-        try:
-            model_object = {
-                "epoch": epoch,
-                "model_state_dict": self._model.state_dict(),
-                "optimizer_state_dict": self._optimizer.state_dict(),
-                "loss": loss,
-            }
+        model_object = {
+            "epoch": epoch,
+            "model_state_dict": self._model.state_dict(),
+            "optimizer_state_dict": self._optimizer.state_dict(),
+            "loss": loss,
+        }
 
-            torch.save(model_object, save_dir_path.joinpath(f"{model_name}.pt"))
-        except Exception as e:
-            raise e
+        model_path: Path = save_dir_path.joinpath(f"{model_name}.pt")
+        torch.save(model_object, model_path)
+        return model_path
 
     def get_lr(self) -> float:
         """Get the current learning rate from PyTorch optimizer used by the model.

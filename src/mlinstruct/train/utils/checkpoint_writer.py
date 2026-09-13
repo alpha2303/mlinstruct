@@ -39,15 +39,18 @@ class CheckpointWriter:
 
     def create_checkpoint(
         self, model_proxy: BaseModelProxy, epoch: int, vloss: float
-    ) -> None:
+    ) -> Path:
         """Create a model checkpoint.
 
         Args:
             model_proxy (BaseModelProxy): The model proxy to use for saving weights.
             epoch (int): The current epoch number.
             vloss (float): The validation loss for the current epoch.
+
+        Returns:
+            Path: The path the checkpoint was written to.
         """
-        model_name: str = f"model_epoch_{epoch}_vloss_{vloss:.4f}.pt"
-        model_proxy.save_weights(
-            epoch, self._model_save_dir_path, model_name, loss=vloss
+        model_stem: str = f"model_epoch_{epoch}_vloss_{vloss:.4f}"
+        return model_proxy.save_weights(
+            epoch, self._model_save_dir_path, model_stem, loss=vloss
         )

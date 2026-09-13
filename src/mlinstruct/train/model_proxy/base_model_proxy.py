@@ -25,14 +25,17 @@ class BaseModelProxy(ABC):
     @abstractmethod
     def save_weights(
         self, epoch: int, save_dir_path: Path, model_name: str, *args, **kwargs
-    ) -> None:
+    ) -> Path:
         """
         Save model weights to a file.
 
         Args:
             epoch (int): The current epoch number.
             save_folder_path (Path): The folder path to save the model weights.
-            model_name (str): The name of the model.
+            model_name (str): The stem of the checkpoint filename, without extension.
+
+        Returns:
+            Path: The path the checkpoint was written to.
         """
         pass
 
