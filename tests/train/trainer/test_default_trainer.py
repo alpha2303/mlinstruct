@@ -108,6 +108,28 @@ def test_constructor_rejects_wrong_types(proxy, payload, save_dir):
         DefaultTrainer(model_proxy=proxy, data_payload=object(), save_dir_path=save_dir)  # type: ignore
 
 
+def test_train_result_reports_best_checkpoint_path_that_exists(proxy, payload, save_dir):
+    trainer = DefaultTrainer(model_proxy=proxy, data_payload=payload, save_dir_path=save_dir)
+
+    result = trainer.train(max_epochs=2)
+
+    assert result.best_checkpoint_path is not None
+    assert result.best_checkpoint_path.exists()
+    assert result.best_val_loss == min(result.val_loss_list)
+
+
+def test_stopped_early_flag_set_when_early_stopper_triggers(proxy, payload, save_dir, mocker):
+    mocker.patch.object(proxy, "train_one_epoch", return_value=0.5)
+    mocker.patch.object(proxy, "validate", return_value=1.0)
+
+    trainer = DefaultTrainer(model_proxy=proxy, data_payload=payload, save_dir_path=save_dir)
+    trainer.add_early_stop(patience=2, min_delta=0.01)
+
+    result = trainer.train(max_epochs=10)
+
+    assert result.stopped_early is True
+
+
 def test_resume_continues_from_saved_epoch(tiny_model, tiny_loaders, save_dir, mocker):
     train_loader, val_loader, _ = tiny_loaders
     data_payload = TorchDataPayload(train_data=train_loader, val_data=val_loader)

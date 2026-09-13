@@ -59,6 +59,8 @@ class DefaultTrainer(BaseTrainer):
             raise ValueError("Max epochs must be positive number greater than 0.")
 
         best_vloss: float = np.inf
+        best_checkpoint_path: Optional[Path] = None
+        stopped_early: bool = False
         train_loss_list, val_loss_list = [], []
 
         self._checkpoint_writer.regenerate_model_save_path()  # type: ignore
@@ -91,7 +93,7 @@ class DefaultTrainer(BaseTrainer):
                 if avg_vloss < best_vloss:
                     best_vloss = avg_vloss
 
-                    self._checkpoint_writer.create_checkpoint(
+                    best_checkpoint_path = self._checkpoint_writer.create_checkpoint(
                         self._model_proxy, epoch_index, avg_vloss
                     )
 
@@ -99,6 +101,7 @@ class DefaultTrainer(BaseTrainer):
 
                 if self._early_stopper and self._early_stopper.early_stop(avg_vloss):
                     self._logger.info(f"Early stop triggered at epoch: {epoch_index}")
+                    stopped_early = True
                     break
 
             if self._data_payload.has_test_data():
@@ -117,6 +120,9 @@ class DefaultTrainer(BaseTrainer):
                 epochs=epochs_completed,
                 train_loss_list=train_loss_list,
                 val_loss_list=val_loss_list,
+                best_val_loss=best_vloss,
+                best_checkpoint_path=best_checkpoint_path,
+                stopped_early=stopped_early,
             )
 
         except Exception as e:
