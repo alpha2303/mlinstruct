@@ -109,3 +109,10 @@ def test_scheduler_step_plateau_vs_step(tiny_model, mocker):
 
 def test_summary_returns_model_statistics(proxy):
     assert isinstance(proxy.summary(), torchinfo.ModelStatistics)
+
+
+def test_lazy_import_returns_same_class_twice():
+    from mlinstruct.train.model_proxy import TorchModelProxy as first_import
+    from mlinstruct.train.model_proxy import TorchModelProxy as second_import
+
+    assert first_import is second_import

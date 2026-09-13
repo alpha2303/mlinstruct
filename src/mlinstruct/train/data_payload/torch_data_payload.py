@@ -1,9 +1,5 @@
 from typing import Optional
 
-from ...utils.funcs import is_dependency_installed
-if not is_dependency_installed("torch"):
-    raise ImportError("Torch is not available")
-
 from ..data_payload.base_data_payload import BaseDataPayload
 
 from torch.utils.data import DataLoader

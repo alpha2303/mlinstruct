@@ -1,4 +1,4 @@
 from . import exception
-from . import funcs
+from . import optional_deps
 
-__all__ = ["exception", "funcs"]
+__all__ = ["exception", "optional_deps"]

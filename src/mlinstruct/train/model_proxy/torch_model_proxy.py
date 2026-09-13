@@ -1,16 +1,16 @@
 from pathlib import Path
-from typing import Iterable, Optional
-
-from ...utils.funcs import is_dependency_installed
-if not is_dependency_installed("torch"):
-    raise ImportError("Torch is not available")
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ...utils.exception import ModelProxyError
 
-import torchinfo
 import torch
+from torch import nn
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
+
+if TYPE_CHECKING:
+    import torchinfo
 
 
 class TorchModelProxy(BaseModelProxy):
@@ -22,20 +22,20 @@ class TorchModelProxy(BaseModelProxy):
     Inherits from BaseModelProxy.
 
     Args:
-        model (torch.nn.Module): The PyTorch model to be proxied.
+        model (nn.Module): The PyTorch model to be proxied.
         optimizer (torch.optim.Optimizer): The optimizer for training the model.
-        loss_fn (torch.nn.modules.loss._Loss): The loss function for training the model.
-        scheduler (Optional[torch.optim.lr_scheduler.LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
+        loss_fn (nn.Module): The loss function for training the model.
+        scheduler (Optional[LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
         model_name (Optional[str], optional): The name of the model. Defaults to the model class name.
 
     """
 
     def __init__(
         self,
-        model: torch.nn.Module,
+        model: nn.Module,
         optimizer: torch.optim.Optimizer,
-        loss_fn: torch.nn.modules.loss._Loss,
-        scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
+        loss_fn: nn.Module,
+        scheduler: Optional[LRScheduler] = None,
         model_name: Optional[str] = None,
     ) -> None:
         self._model = model
@@ -100,7 +100,7 @@ class TorchModelProxy(BaseModelProxy):
         Returns:
             bool: True if the model has a scheduler, False otherwise.
         """
-        return isinstance(self._scheduler, torch.optim.lr_scheduler.LRScheduler)
+        return isinstance(self._scheduler, LRScheduler)
 
     def scheduler_step(self, avg_vloss: float) -> None:
         """Perform a step of the learning rate scheduler if it exists.
@@ -186,10 +186,12 @@ class TorchModelProxy(BaseModelProxy):
         """
         return self._model_name
 
-    def summary(self) -> torchinfo.ModelStatistics:
+    def summary(self) -> "torchinfo.ModelStatistics":
         """Get a summary of the model architecture.
 
         Returns:
             torchinfo.ModelStatistics: A summary of the model.
         """
+        import torchinfo
+
         return torchinfo.summary(self._model)

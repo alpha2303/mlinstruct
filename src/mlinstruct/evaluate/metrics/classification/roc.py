@@ -1,7 +1,7 @@
 from typing import Self, Optional
 
 import numpy as np
-from sklearn.metrics import roc_curve
+from sklearn.metrics import auc, roc_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
@@ -38,7 +38,7 @@ def _compute_auc(fpr: np.ndarray, tpr: np.ndarray) -> float:
     Returns:
         float: The computed AUC.
     """
-    return np.trapz(tpr, fpr)
+    return auc(fpr, tpr)
 
 
 class ROC(BaseMetrics):

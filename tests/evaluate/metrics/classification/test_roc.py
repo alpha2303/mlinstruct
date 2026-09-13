@@ -1,5 +1,6 @@
 import numpy as np
 from unittest import TestCase
+from sklearn.metrics import roc_auc_score
 
 from mlinstruct.evaluate.metrics.classification import ROC
 
@@ -15,3 +16,7 @@ class TestROC(TestCase):
     def test_from_predictions_runs(self) -> None:
         roc: ROC = ROC.from_predictions(self.y, self.y_pred)
         self.assertIsInstance(roc, ROC)
+
+    def test_auc_matches_sklearn_roc_auc_score(self) -> None:
+        roc: ROC = ROC.from_predictions(self.y, self.y_pred)
+        self.assertAlmostEqual(roc._auc, roc_auc_score(self.y, self.y_pred))
