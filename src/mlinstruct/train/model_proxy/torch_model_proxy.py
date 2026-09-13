@@ -1,16 +1,17 @@
 import warnings
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional, Union
-
-from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..utils.device import move_to_device, resolve_device
-from ... import __version__
-from ...utils.exception import ModelProxyError
+from typing import TYPE_CHECKING
 
 import torch
 from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
+
+from ... import __version__
+from ...utils.exception import ModelProxyError
+from ..model_proxy.base_model_proxy import BaseModelProxy
+from ..utils.device import move_to_device, resolve_device
 
 if TYPE_CHECKING:
     import torchinfo
@@ -32,10 +33,12 @@ class TorchModelProxy(BaseModelProxy):
         model (nn.Module): The PyTorch model to be proxied.
         optimizer (torch.optim.Optimizer): The optimizer for training the model.
         loss_fn (nn.Module): The loss function for training the model.
-        scheduler (Optional[LRScheduler], optional): The learning rate scheduler for the model. Defaults to None.
-        model_name (Optional[str], optional): The name of the model. Defaults to the model class name.
-        device (Optional[Union[str, torch.device]], optional): The device to train on. Defaults to the
-            current accelerator if one is available, else CPU.
+        scheduler (Optional[LRScheduler], optional): The learning rate scheduler for the
+            model. Defaults to None.
+        model_name (Optional[str], optional): The name of the model. Defaults to the
+            model class name.
+        device (Optional[Union[str, torch.device]], optional): The device to train on.
+            Defaults to the current accelerator if one is available, else CPU.
 
     """
 
@@ -44,9 +47,9 @@ class TorchModelProxy(BaseModelProxy):
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         loss_fn: nn.Module,
-        scheduler: Optional[LRScheduler] = None,
-        model_name: Optional[str] = None,
-        device: Optional[Union[str, torch.device]] = None,
+        scheduler: LRScheduler | None = None,
+        model_name: str | None = None,
+        device: str | torch.device | None = None,
     ) -> None:
         self._device = resolve_device(device)
         self._model = model.to(self._device)
@@ -72,9 +75,7 @@ class TorchModelProxy(BaseModelProxy):
         Returns:
             int: The epoch recorded in the checkpoint.
         """
-        checkpoint = torch.load(
-            model_file_path, map_location=self._device, weights_only=True
-        )
+        checkpoint = torch.load(model_file_path, map_location=self._device, weights_only=True)
         self._model.load_state_dict(checkpoint["model_state_dict"])
         self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
@@ -113,7 +114,8 @@ class TorchModelProxy(BaseModelProxy):
         """
         if not save_dir_path.exists():
             raise ModelProxyError(
-                "Model save path does not exist. If you are running the save method directly, ensure that the save path is valid."
+                "Model save path does not exist. If you are running the save method "
+                "directly, ensure that the save path is valid."
             )
 
         model_object = {
@@ -154,9 +156,7 @@ class TorchModelProxy(BaseModelProxy):
             avg_vloss (float): The average validation loss for the current epoch.
         """
         if not self.has_scheduler():
-            raise ModelProxyError(
-                "Model Proxy does not have a valid scheduler configured."
-            )
+            raise ModelProxyError("Model Proxy does not have a valid scheduler configured.")
 
         if isinstance(self._scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             self._scheduler.step(avg_vloss)
@@ -207,9 +207,7 @@ class TorchModelProxy(BaseModelProxy):
             ModelProxyError: If the test data is not a DataLoader instance.
         """
         if not isinstance(test_data, DataLoader):
-            raise ModelProxyError(
-                "Test Input is not an instance of torch.utils.data.DataLoader"
-            )
+            raise ModelProxyError("Test Input is not an instance of torch.utils.data.DataLoader")
 
         running_vloss: float = 0.0
 

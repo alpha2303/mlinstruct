@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Self
+from typing import Self
 
-from matplotlib.axes import Axes
 import numpy as np
+from matplotlib.axes import Axes
 
 
 class BaseMetrics(ABC):
@@ -20,7 +20,7 @@ class BaseMetrics(ABC):
         title: str,
         xaxis_name: str,
         yaxis_name: str,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         *args,
         **kwargs,
     ) -> Axes:

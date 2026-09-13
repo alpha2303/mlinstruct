@@ -50,9 +50,7 @@ def test_core_imports_without_torch():
 
 
 def test_torch_symbols_raise_helpful_error_without_torch():
-    result = _run_without_torch(
-        "from mlinstruct.train.model_proxy import TorchModelProxy\n"
-    )
+    result = _run_without_torch("from mlinstruct.train.model_proxy import TorchModelProxy\n")
 
     assert result.returncode != 0
     assert "mlinstruct[torch]" in result.stderr
@@ -62,4 +60,4 @@ def test_lazy_getattr_unknown_name_raises_attribute_error():
     import mlinstruct.train.model_proxy as model_proxy_module
 
     with pytest.raises(AttributeError):
-        model_proxy_module.DoesNotExist
+        _ = model_proxy_module.DoesNotExist

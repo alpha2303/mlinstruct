@@ -6,9 +6,7 @@ from mlinstruct.train.data_payload import TorchDataPayload
 def test_valid_construction(tiny_loaders):
     train_loader, val_loader, test_loader = tiny_loaders
 
-    payload = TorchDataPayload(
-        train_data=train_loader, val_data=val_loader, test_data=test_loader
-    )
+    payload = TorchDataPayload(train_data=train_loader, val_data=val_loader, test_data=test_loader)
 
     assert payload.get_train_data() is train_loader
     assert payload.get_val_data() is val_loader
@@ -18,9 +16,7 @@ def test_valid_construction(tiny_loaders):
 def test_has_test_data_true_when_provided(tiny_loaders):
     train_loader, val_loader, test_loader = tiny_loaders
 
-    payload = TorchDataPayload(
-        train_data=train_loader, val_data=val_loader, test_data=test_loader
-    )
+    payload = TorchDataPayload(train_data=train_loader, val_data=val_loader, test_data=test_loader)
 
     assert payload.has_test_data() is True
 

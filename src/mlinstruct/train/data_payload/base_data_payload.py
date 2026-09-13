@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 
 class BaseDataPayload(ABC):
@@ -8,7 +8,8 @@ class BaseDataPayload(ABC):
     Training data, validation data, and optional test data are provided as input.
 
     - Training Data: Data used to train the learning model.
-    - Validation Data: Data used to validate the learning model during training for hyperparameters tuning.
+    - Validation Data: Data used to validate the learning model during training
+      for hyperparameters tuning.
     - Test Data: Data used to test the model post-training, and is an optional step.
 
     Args:
@@ -21,7 +22,7 @@ class BaseDataPayload(ABC):
         self,
         train_data: Iterable,
         val_data: Iterable,
-        test_data: Optional[Iterable] = None,
+        test_data: Iterable | None = None,
     ):
         self._train_data = train_data
         self._val_data = val_data
@@ -43,7 +44,7 @@ class BaseDataPayload(ABC):
         """
         return self._val_data
 
-    def get_test_data(self) -> Optional[Iterable]:
+    def get_test_data(self) -> Iterable | None:
         """Get the test data.
 
         Returns:

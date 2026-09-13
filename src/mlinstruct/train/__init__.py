@@ -1,7 +1,4 @@
-from . import data_payload
-from . import model_proxy
-from . import trainer
-from . import utils
+from . import data_payload, model_proxy, trainer, utils
 from .train_result import TrainResult
 
 __all__ = [

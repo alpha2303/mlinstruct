@@ -7,6 +7,4 @@ def is_installed(package_name: str) -> bool:
 
 def require(name: str, extra: str, symbol: str) -> None:
     if not is_installed(name):
-        raise ImportError(
-            f"{symbol} requires the '{extra}' extra: pip install mlinstruct[{extra}]"
-        )
+        raise ImportError(f"{symbol} requires the '{extra}' extra: pip install mlinstruct[{extra}]")

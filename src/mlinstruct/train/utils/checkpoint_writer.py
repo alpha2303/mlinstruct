@@ -1,8 +1,7 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-from ..model_proxy import BaseModelProxy
 
+from ..model_proxy import BaseModelProxy
 
 _TIMESTAMP_FORMAT: str = "%Y%m%d_%H%M%S"
 
@@ -19,10 +18,10 @@ class CheckpointWriter:
     """
 
     _root_save_dir_path: Path
-    _run_name: Optional[str]
+    _run_name: str | None
     _model_save_dir_path: Path
 
-    def __init__(self, root_save_dir_path: Path, run_name: Optional[str] = None) -> None:
+    def __init__(self, root_save_dir_path: Path, run_name: str | None = None) -> None:
         self._root_save_dir_path = root_save_dir_path
         self._run_name = run_name
 
@@ -47,9 +46,7 @@ class CheckpointWriter:
         """
         return self._model_save_dir_path
 
-    def create_checkpoint(
-        self, model_proxy: BaseModelProxy, epoch: int, vloss: float
-    ) -> Path:
+    def create_checkpoint(self, model_proxy: BaseModelProxy, epoch: int, vloss: float) -> Path:
         """Create a model checkpoint.
 
         Args:
@@ -61,6 +58,4 @@ class CheckpointWriter:
             Path: The path the checkpoint was written to.
         """
         model_stem: str = f"model_epoch_{epoch}_vloss_{vloss:.4f}"
-        return model_proxy.save_weights(
-            epoch, self._model_save_dir_path, model_stem, loss=vloss
-        )
+        return model_proxy.save_weights(epoch, self._model_save_dir_path, model_stem, loss=vloss)

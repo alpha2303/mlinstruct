@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from mlinstruct.evaluate.plots.loss_plotter import LossPlotter

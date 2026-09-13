@@ -1,6 +1,5 @@
-from typing import Optional
-import numpy as np
 import matplotlib.axes as axes
+import numpy as np
 
 from .base_plotter import BasePlotter
 
@@ -9,7 +8,8 @@ class ROCPlotter(BasePlotter):
     """Creates a plotting object to visualize ROC Curve.
 
     Args:
-        title (str, optional): Title of the plot. Defaults to "Receiver operating characteristic (ROC) curve".
+        title (str, optional): Title of the plot.
+            Defaults to "Receiver operating characteristic (ROC) curve".
         xaxis_name (str, optional): Label for X axis. Defaults to "False Positive Rate".
         yaxis_name (str, optional): Label for Y axis. Defaults to "True Positive Rate".
         curve_color (str, optional): Color of the ROC curve. Defaults to "darkorange".
@@ -45,7 +45,7 @@ class ROCPlotter(BasePlotter):
         ax: axes.Axes,
         fpr: np.ndarray,
         tpr: np.ndarray,
-        auc: Optional[float] = None,
+        auc: float | None = None,
         **kwargs,
     ) -> axes.Axes:
         """Generates the ROC Curve on provided matplotlib axes object.
@@ -60,7 +60,7 @@ class ROCPlotter(BasePlotter):
         Returns:
             axes.Axes: The matplotlib axes object with the plotted ROC curve.
         """
-        auc_label = "(AUC = %0.2f)" % auc if auc is not None else ""
+        auc_label = f"(AUC = {auc:0.2f})" if auc is not None else ""
 
         ax.plot(
             fpr,

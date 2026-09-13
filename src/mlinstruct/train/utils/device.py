@@ -1,9 +1,9 @@
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 
 
-def resolve_device(device: Optional[Union[str, torch.device]] = None) -> torch.device:
+def resolve_device(device: str | torch.device | None = None) -> torch.device:
     """Resolve the torch.device to train on.
 
     Args:
@@ -43,8 +43,5 @@ def move_to_device(obj: Any, device: torch.device, non_blocking: bool = True) ->
     if isinstance(obj, list):
         return [move_to_device(item, device, non_blocking) for item in obj]
     if isinstance(obj, dict):
-        return {
-            key: move_to_device(value, device, non_blocking)
-            for key, value in obj.items()
-        }
+        return {key: move_to_device(value, device, non_blocking) for key, value in obj.items()}
     return obj

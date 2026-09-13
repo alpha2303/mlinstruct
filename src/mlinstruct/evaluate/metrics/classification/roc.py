@@ -1,14 +1,14 @@
-from typing import Self, Optional
+from typing import Self
 
-import numpy as np
-from sklearn.metrics import auc, roc_curve
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
+from sklearn.metrics import auc, roc_curve
 
+from ....utils.exception import IncompatibleDimsException
+from ...plots.roc_plotter import ROCPlotter
 from ..base_metrics import BaseMetrics
 from ..metric_utils import MetricUtils
-from ...plots.roc_plotter import ROCPlotter
-from ....utils.exception import IncompatibleDimsException
 
 
 def _compute_roc_curve(
@@ -22,7 +22,8 @@ def _compute_roc_curve(
         pred_array (numpy.ndarray): The predicted labels.
 
     Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray]: The false positive rate, true positive rate, and thresholds.
+        tuple[np.ndarray, np.ndarray, np.ndarray]: The false positive rate, true positive
+            rate, and thresholds.
     """
     return roc_curve(truth_array, pred_array)
 
@@ -88,7 +89,7 @@ class ROC(BaseMetrics):
         title: str = "Receiver operating characteristic (ROC) curve",
         xaxis_name: str = "False Positive Rate",
         yaxis_name: str = "True Positive Rate",
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         **kwargs,
     ) -> Axes:
         """
@@ -104,6 +105,6 @@ class ROC(BaseMetrics):
         if ax is None:
             _, ax = plt.subplots()
 
-        return ROCPlotter(
-            title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name
-        ).plot(ax, self._fpr, self._tpr, self._auc, **kwargs)
+        return ROCPlotter(title=title, xaxis_name=xaxis_name, yaxis_name=yaxis_name).plot(
+            ax, self._fpr, self._tpr, self._auc, **kwargs
+        )

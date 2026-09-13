@@ -1,4 +1,3 @@
-from . import metrics
-from . import plots
+from . import metrics, plots
 
 __all__ = ["metrics", "plots"]

@@ -1,6 +1,5 @@
-from typing import Optional
-import numpy as np
 import matplotlib.axes as axes
+import numpy as np
 
 from .base_plotter import BasePlotter
 
@@ -18,8 +17,10 @@ class LossPlotter(BasePlotter):
         title (str, optional): Title of the plot. Defaults to "Training Loss per Epoch".
         xaxis_name (str, optional): Label of the X axis of the plot. Defaults to "Epoch".
         yaxis_name (str, optional): Label of the Y axis of the plot. Defaults to "Loss".
-        add_legend (bool, optional): Whether a legend should be added to the plot. Defaults to True.
-        legend_loc (str, optional): Location of the legend on the plot figure. Defaults to "upper right".
+        add_legend (bool, optional): Whether a legend should be added to the plot.
+            Defaults to True.
+        legend_loc (str, optional): Location of the legend on the plot figure.
+            Defaults to "upper right".
         cmap (Colormap, optional): Colormap to use for the plot.
             Defaults to `matplotlib.pyplot.cm.Blues`.
     """
@@ -50,16 +51,17 @@ class LossPlotter(BasePlotter):
         self,
         ax: axes.Axes,
         train_losses: np.ndarray,
-        val_losses: Optional[np.ndarray] = None,
+        val_losses: np.ndarray | None = None,
         **kwargs,
     ) -> axes.Axes:
         """Generates the Training Loss Line Plot on matplotlib.axes.Axes object provided.
 
         Args:
             ax (matplotlib.axes.Axes): Matplotlib Axes object on which the plot will be drawn.
-            train_losses (numpy.ndarray): NumPy array containing the training loss values of each training epoch.
-            val_losses (numpy.ndarray, optional): NumPy array containing the validation loss values of each training epoch.
-                Defaults to None.
+            train_losses (numpy.ndarray): NumPy array containing the training loss values
+                of each training epoch.
+            val_losses (numpy.ndarray, optional): NumPy array containing the validation loss
+                values of each training epoch. Defaults to None.
 
         Returns:
             matplotlib.axes.Axes: The axes object with the plotted data.

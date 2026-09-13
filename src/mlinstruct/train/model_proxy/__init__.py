@@ -1,7 +1,7 @@
 from typing import Any
 
-from .base_model_proxy import BaseModelProxy
 from ...utils.optional_deps import require
+from .base_model_proxy import BaseModelProxy
 
 __all__ = ["BaseModelProxy", "TorchModelProxy"]
 

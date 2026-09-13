@@ -1,5 +1,3 @@
-from typing import Tuple
-
 """
 Model Training Exceptions
 """
@@ -29,8 +27,11 @@ Model Evaluation Exceptions
 class IncompatibleDimsException(ValueError):
     """Exception raised for incompatible input dimensions for ndarrays."""
 
-    def __init__(self, shape_1: Tuple[int, ...], shape_2: Tuple[int, ...]) -> None:
-        self.message: str = f"Incompatible Dimensions: {shape_1}, {shape_2}. Size and shape of input arrays must match."
+    def __init__(self, shape_1: tuple[int, ...], shape_2: tuple[int, ...]) -> None:
+        self.message: str = (
+            f"Incompatible Dimensions: {shape_1}, {shape_2}. "
+            "Size and shape of input arrays must match."
+        )
         super().__init__(self.message)
 
 
@@ -38,5 +39,8 @@ class IncompatibleValuesException(ValueError):
     """Exception raised for incompatible input values for ndarrays."""
 
     def __init__(self) -> None:
-        self.message: str = "Incompatible Values: Input arrays may be empty, continuous values or do not have the same unique values."
+        self.message: str = (
+            "Incompatible Values: Input arrays may be empty, non-integer, negative, "
+            "or contain values outside the expected class range."
+        )
         super().__init__(self.message)

@@ -1,8 +1,7 @@
-from typing import List, Optional
 import numpy as np
+from matplotlib import colormaps
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
-from matplotlib import colormaps
 
 from .base_plotter import BasePlotter
 
@@ -35,7 +34,7 @@ class ConfusionMatrixPlotter(BasePlotter):
         self,
         ax: Axes,
         conf_matrix: np.ndarray,
-        class_labels: Optional[List[str]] = None,
+        class_labels: list[str] | None = None,
         **kwargs,
     ) -> Axes:
         """Generates the Confusion Matrix Heatmap Plot.
@@ -55,7 +54,8 @@ class ConfusionMatrixPlotter(BasePlotter):
         """
         if conf_matrix.shape[0] != conf_matrix.shape[1]:
             raise ValueError(
-                f"Confusion Matrix has invalid dimensions: {conf_matrix.shape}. Square matrix required."
+                f"Confusion Matrix has invalid dimensions: {conf_matrix.shape}. "
+                "Square matrix required."
             )
 
         if class_labels is None:
@@ -63,16 +63,15 @@ class ConfusionMatrixPlotter(BasePlotter):
 
         if len(class_labels) != conf_matrix.shape[0]:
             raise ValueError(
-                f"Number of class labels ({len(class_labels)}) do not match length of confusion matrix ({conf_matrix.shape[0]})."
+                f"Number of class labels ({len(class_labels)}) do not match length "
+                f"of confusion matrix ({conf_matrix.shape[0]})."
             )
 
         ax.matshow(conf_matrix, cmap=self._cmap)
         ax.set_xlabel(self._xaxis_name)
         ax.set_ylabel(self._yaxis_name)
         ax.set_title(self._title)
-        ax.tick_params(
-            axis="x", bottom=True, top=False, labelbottom=True, labeltop=False
-        )
+        ax.tick_params(axis="x", bottom=True, top=False, labelbottom=True, labeltop=False)
 
         if class_labels is not None:
             ax.set_xticks(np.arange(len(class_labels)), labels=class_labels)
@@ -93,9 +92,7 @@ class ConfusionMatrixPlotter(BasePlotter):
 
         return ax
 
-    def _get_text_color(
-        self, conf_matrix: np.ndarray, row_idx: int, col_idx: int
-    ) -> str:
+    def _get_text_color(self, conf_matrix: np.ndarray, row_idx: int, col_idx: int) -> str:
         """Determines the text color based on the cell value.
 
         Args:

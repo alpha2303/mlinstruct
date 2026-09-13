@@ -6,8 +6,7 @@ from torch import optim
 
 from mlinstruct.train.data_payload import TorchDataPayload
 from mlinstruct.train.model_proxy import TorchModelProxy
-from mlinstruct.train.trainer import DefaultTrainer
-from mlinstruct.train.trainer import default_trainer
+from mlinstruct.train.trainer import DefaultTrainer, default_trainer
 from mlinstruct.utils.exception import TrainerError
 
 
@@ -24,9 +23,7 @@ def test_scheduler_step_receives_val_loss(tiny_model, tiny_loaders, save_dir, mo
     mocker.spy(proxy, "validate")
     mocker.spy(proxy, "scheduler_step")
 
-    trainer = DefaultTrainer(
-        model_proxy=proxy, data_payload=data_payload, save_dir_path=save_dir
-    )
+    trainer = DefaultTrainer(model_proxy=proxy, data_payload=data_payload, save_dir_path=save_dir)
     trainer.train(max_epochs=1)
 
     proxy.scheduler_step.assert_called_once_with(avg_vloss=proxy.validate.spy_return)
@@ -94,10 +91,7 @@ def test_test_set_evaluated_when_present(proxy, payload, save_dir, mocker):
     trainer.train(max_epochs=1)
 
     test_loader = payload.get_test_data()
-    assert any(
-        call.args and call.args[0] is test_loader
-        for call in validate_spy.call_args_list
-    )
+    assert any(call.args and call.args[0] is test_loader for call in validate_spy.call_args_list)
 
 
 def test_constructor_rejects_wrong_types(proxy, payload, save_dir):

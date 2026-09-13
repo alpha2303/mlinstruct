@@ -1,7 +1,7 @@
 from typing import Any
 
-from .base_data_payload import BaseDataPayload
 from ...utils.optional_deps import require
+from .base_data_payload import BaseDataPayload
 
 __all__ = ["BaseDataPayload", "TorchDataPayload"]
 

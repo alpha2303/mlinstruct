@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 
 @dataclass(frozen=True)
@@ -22,8 +21,8 @@ class TrainResult:
     model_name: str
     model_save_path: Path
     epochs: int
-    train_loss_list: List[float]
-    val_loss_list: List[float]
+    train_loss_list: list[float]
+    val_loss_list: list[float]
     best_val_loss: float
-    best_checkpoint_path: Optional[Path]
+    best_checkpoint_path: Path | None
     stopped_early: bool

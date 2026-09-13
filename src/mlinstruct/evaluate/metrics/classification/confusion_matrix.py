@@ -1,14 +1,14 @@
-from typing import List, Self, Optional
+from typing import Self
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
+from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
+from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
 from ..base_metrics import BaseMetrics
 from ..metric_utils import MetricUtils
-from ...plots.cm_plotter import DEFAULT_CMAP, ConfusionMatrixPlotter
-from ....utils.exception import IncompatibleDimsException, IncompatibleValuesException
 
 
 def _compute_confusion_matrix(
@@ -35,19 +35,17 @@ class ConfusionMatrix(BaseMetrics):
         class_labels (list, optional): The class labels.
     """
 
-    def __init__(
-        self, confusion_matrix: np.ndarray, class_labels: Optional[List[str]] = None
-    ):
+    def __init__(self, confusion_matrix: np.ndarray, class_labels: list[str] | None = None):
         self._confusion_matrix: np.ndarray = confusion_matrix
-        self._class_labels: Optional[List[str]] = class_labels
+        self._class_labels: list[str] | None = class_labels
 
     @classmethod
     def from_predictions(
         cls,
         y: np.ndarray,
         y_pred: np.ndarray,
-        num_classes: Optional[int] = None,
-        class_labels: Optional[list] = None,
+        num_classes: int | None = None,
+        class_labels: list | None = None,
     ) -> Self:
         """
         Create an instance of the ConfusionMatrix from the true and predicted values.
@@ -97,7 +95,7 @@ class ConfusionMatrix(BaseMetrics):
         title: str = "Confusion Matrix",
         xaxis_name: str = "Predicted",
         yaxis_name: str = "True",
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         cmap: Colormap = DEFAULT_CMAP,
         **kwargs,
     ) -> Axes:

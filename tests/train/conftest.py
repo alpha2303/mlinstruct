@@ -2,8 +2,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from torch import nn, optim
-from torch.utils.data import DataLoader, TensorDataset, random_split
+from torch import nn, optim  # noqa: E402
+from torch.utils.data import DataLoader, TensorDataset, random_split  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -42,6 +42,4 @@ def payload(tiny_loaders):
     from mlinstruct.train.data_payload import TorchDataPayload
 
     train_loader, val_loader, test_loader = tiny_loaders
-    return TorchDataPayload(
-        train_data=train_loader, val_data=val_loader, test_data=test_loader
-    )
+    return TorchDataPayload(train_data=train_loader, val_data=val_loader, test_data=test_loader)
