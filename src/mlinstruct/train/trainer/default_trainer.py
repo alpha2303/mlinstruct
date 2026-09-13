@@ -39,11 +39,14 @@ class DefaultTrainer(BaseTrainer):
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
         self._validate_trainer_attrs()
 
-    def train(self, max_epochs: int) -> TrainResult:
+    def train(self, max_epochs: int, resume_from: Optional[Path] = None) -> TrainResult:
         """Train the model.
 
         Args:
-            max_epochs (int): The maximum number of training epochs.
+            max_epochs (int): The maximum epoch to train up to. Remains the
+                absolute upper bound even when resuming.
+            resume_from (Optional[Path]): Path to a checkpoint to resume from.
+                Training starts at the checkpoint's epoch + 1.
 
         Returns:
             TrainResult: The result of the training process.
@@ -60,9 +63,13 @@ class DefaultTrainer(BaseTrainer):
 
         self._checkpoint_writer.regenerate_model_save_path()  # type: ignore
 
-        epochs_completed: int = 0
+        start_epoch: int = 1
+        if resume_from is not None:
+            start_epoch = self._model_proxy.load_checkpoint(resume_from) + 1
+
+        epochs_completed: int = start_epoch - 1
         try:
-            for epoch_index in range(1, max_epochs + 1):
+            for epoch_index in range(start_epoch, max_epochs + 1):
                 avg_loss = self._model_proxy.train_one_epoch(
                     self._data_payload.get_train_data()
                 )

@@ -14,11 +14,14 @@ class BaseModelProxy(ABC):
     """
 
     @abstractmethod
-    def load_weights(self, model_file_path: Path) -> None:
-        """Load model weights from a saved model checkpoint file.
+    def load_checkpoint(self, model_file_path: Path) -> int:
+        """Load model, optimizer, and scheduler state from a checkpoint file.
 
         Args:
-            model_file_path (Path): The path to the model file.
+            model_file_path (Path): The path to the checkpoint file.
+
+        Returns:
+            int: The epoch recorded in the checkpoint.
         """
         pass
 

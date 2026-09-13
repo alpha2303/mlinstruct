@@ -1,8 +1,10 @@
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 from ..model_proxy.base_model_proxy import BaseModelProxy
 from ..utils.device import move_to_device, resolve_device
+from ... import __version__
 from ...utils.exception import ModelProxyError
 
 import torch
@@ -59,16 +61,41 @@ class TorchModelProxy(BaseModelProxy):
         """The device the model is trained and evaluated on."""
         return self._device
 
-    def load_weights(self, model_file_path: Path) -> None:
-        """Load model weights from a saved model checkpoint file.
+    def load_checkpoint(self, model_file_path: Path) -> int:
+        """Load model, optimizer, and (if present) scheduler state from a checkpoint file.
+
+        Does not change the model's train/eval mode.
 
         Args:
-            model_file_path (Path): The path to the model file.
+            model_file_path (Path): The path to the checkpoint file.
+
+        Returns:
+            int: The epoch recorded in the checkpoint.
         """
-        checkpoint = torch.load(model_file_path)
+        checkpoint = torch.load(
+            model_file_path, map_location=self._device, weights_only=True
+        )
         self._model.load_state_dict(checkpoint["model_state_dict"])
         self._optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self._model.eval()
+
+        scheduler_state_dict = checkpoint.get("scheduler_state_dict")
+        if scheduler_state_dict is not None and self.has_scheduler():
+            self._scheduler.load_state_dict(scheduler_state_dict)  # type: ignore
+
+        return checkpoint["epoch"]
+
+    def load_weights(self, model_file_path: Path) -> None:
+        """Deprecated alias for load_checkpoint.
+
+        Args:
+            model_file_path (Path): The path to the checkpoint file.
+        """
+        warnings.warn(
+            "TorchModelProxy.load_weights is deprecated; use load_checkpoint instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.load_checkpoint(model_file_path)
 
     def save_weights(
         self, epoch: int, save_dir_path: Path, model_name: str, loss: float, **kwargs
@@ -93,7 +120,11 @@ class TorchModelProxy(BaseModelProxy):
             "epoch": epoch,
             "model_state_dict": self._model.state_dict(),
             "optimizer_state_dict": self._optimizer.state_dict(),
+            "scheduler_state_dict": (
+                self._scheduler.state_dict() if self.has_scheduler() else None  # type: ignore
+            ),
             "loss": loss,
+            "mlinstruct_version": __version__,
         }
 
         model_path: Path = save_dir_path.joinpath(f"{model_name}.pt")

@@ -106,3 +106,27 @@ def test_constructor_rejects_wrong_types(proxy, payload, save_dir):
 
     with pytest.raises(TrainerError):
         DefaultTrainer(model_proxy=proxy, data_payload=object(), save_dir_path=save_dir)  # type: ignore
+
+
+def test_resume_continues_from_saved_epoch(tiny_model, tiny_loaders, save_dir, mocker):
+    train_loader, val_loader, _ = tiny_loaders
+    data_payload = TorchDataPayload(train_data=train_loader, val_data=val_loader)
+
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(model=tiny_model, optimizer=optimizer, loss_fn=torch.nn.MSELoss())
+
+    mocker.patch.object(proxy, "train_one_epoch", side_effect=[0.5, 0.4, 0.3, 0.2])
+    mocker.patch.object(proxy, "validate", side_effect=[0.9, 0.8, 0.7, 0.6])
+
+    trainer = DefaultTrainer(model_proxy=proxy, data_payload=data_payload, save_dir_path=save_dir)
+    first_result = trainer.train(max_epochs=2)
+
+    assert first_result.epochs == 2
+    assert len(first_result.train_loss_list) == 2
+
+    checkpoint_path = sorted(first_result.model_save_path.glob("*.pt"))[-1]
+
+    second_result = trainer.train(max_epochs=4, resume_from=checkpoint_path)
+
+    assert second_result.epochs == 4
+    assert len(second_result.train_loss_list) == 2

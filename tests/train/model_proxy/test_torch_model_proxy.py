@@ -48,22 +48,78 @@ def test_validate_does_not_update_weights(proxy, tiny_loaders):
         assert torch.equal(value, after[key])
 
 
-def test_save_then_load_roundtrip(proxy, save_dir):
+def test_save_then_load_checkpoint_roundtrip(proxy, save_dir):
     original_state = {key: value.clone() for key, value in proxy._model.state_dict().items()}
     original_lr = proxy._optimizer.state_dict()["param_groups"][0]["lr"]
 
-    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    proxy.save_weights(epoch=3, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
     checkpoint_path = save_dir / "ckpt.pt"
 
     with torch.no_grad():
         for param in proxy._model.parameters():
             param.zero_()
 
-    proxy.load_weights(checkpoint_path)
+    loaded_epoch = proxy.load_checkpoint(checkpoint_path)
 
+    assert loaded_epoch == 3
     for key, value in original_state.items():
         assert torch.equal(proxy._model.state_dict()[key], value)
     assert proxy._optimizer.state_dict()["param_groups"][0]["lr"] == original_lr
+
+
+def test_checkpoint_contains_scheduler_state_when_present(tiny_model, save_dir):
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), scheduler=scheduler
+    )
+
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    checkpoint = torch.load(save_dir / "ckpt.pt", weights_only=True)
+
+    assert checkpoint["scheduler_state_dict"] is not None
+
+
+def test_checkpoint_contains_none_scheduler_state_when_absent(proxy, save_dir):
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    checkpoint = torch.load(save_dir / "ckpt.pt", weights_only=True)
+
+    assert checkpoint["scheduler_state_dict"] is None
+
+
+def test_load_checkpoint_returns_epoch_and_keeps_train_mode(proxy, save_dir):
+    proxy.save_weights(epoch=5, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    proxy._model.eval()
+
+    loaded_epoch = proxy.load_checkpoint(save_dir / "ckpt.pt")
+
+    assert loaded_epoch == 5
+    assert proxy._model.training is False
+
+
+def test_load_checkpoint_uses_weights_only(proxy, save_dir, mocker):
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    load_spy = mocker.spy(torch, "load")
+
+    proxy.load_checkpoint(save_dir / "ckpt.pt")
+
+    assert load_spy.call_args.kwargs["weights_only"] is True
+
+
+def test_load_checkpoint_map_location_matches_device(proxy, save_dir, mocker):
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    load_spy = mocker.spy(torch, "load")
+
+    proxy.load_checkpoint(save_dir / "ckpt.pt")
+
+    assert load_spy.call_args.kwargs["map_location"] == proxy.device
+
+
+def test_load_weights_is_deprecated_alias_for_load_checkpoint(proxy, save_dir):
+    proxy.save_weights(epoch=7, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+
+    with pytest.deprecated_call():
+        proxy.load_weights(save_dir / "ckpt.pt")
 
 
 def test_save_weights_rejects_missing_dir(proxy, save_dir):
