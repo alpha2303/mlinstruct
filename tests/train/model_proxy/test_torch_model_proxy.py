@@ -201,6 +201,65 @@ def test_train_with_cpu_loader_and_gpu_model_does_not_raise(tiny_model, tiny_loa
     proxy.train_one_epoch(train_loader)
 
 
+def test_amp_disabled_by_default_has_no_scaler_effect(proxy):
+    assert proxy._use_amp is False
+    assert proxy._scaler.is_enabled() is False
+
+
+def test_amp_cpu_bf16_trains(tiny_model, tiny_loaders):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), use_amp=True
+    )
+
+    avg_loss = proxy.train_one_epoch(train_loader)
+
+    assert proxy._amp_dtype == torch.bfloat16
+    assert isinstance(avg_loss, float)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+def test_amp_cuda_fp16_uses_scaler(tiny_model, tiny_loaders, mocker):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model,
+        optimizer=optimizer,
+        loss_fn=nn.MSELoss(),
+        device="cuda",
+        use_amp=True,
+        amp_dtype=torch.float16,
+    )
+    step_spy = mocker.spy(proxy._scaler, "step")
+
+    proxy.train_one_epoch(train_loader)
+
+    assert proxy._scaler.is_enabled() is True
+    step_spy.assert_called()
+
+
+def test_checkpoint_roundtrips_scaler_state(tiny_model, tiny_loaders, save_dir):
+    train_loader, _, _ = tiny_loaders
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    proxy = TorchModelProxy(
+        model=tiny_model,
+        optimizer=optimizer,
+        loss_fn=nn.MSELoss(),
+        use_amp=True,
+        amp_dtype=torch.float16,
+    )
+    proxy.train_one_epoch(train_loader)
+    original_scaler_state = proxy._scaler.state_dict()
+
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+    proxy._scaler = torch.amp.GradScaler(proxy._device.type, enabled=True)
+
+    proxy.load_checkpoint(save_dir / "ckpt.pt")
+
+    assert proxy._scaler.state_dict() == original_scaler_state
+
+
 def test_lazy_import_returns_same_class_twice():
     from mlinstruct.train.model_proxy import TorchModelProxy as first_import
     from mlinstruct.train.model_proxy import TorchModelProxy as second_import

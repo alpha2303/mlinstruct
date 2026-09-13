@@ -39,6 +39,11 @@ class TorchModelProxy(BaseModelProxy):
             model class name.
         device (Optional[Union[str, torch.device]], optional): The device to train on.
             Defaults to the current accelerator if one is available, else CPU.
+        use_amp (bool, optional): Whether to train with automatic mixed precision.
+            Defaults to False.
+        amp_dtype (Optional[torch.dtype], optional): The autocast dtype to use when
+            use_amp is True. Defaults to bfloat16 if the device is CUDA and supports
+            it, else float16 on CUDA or bfloat16 on CPU.
 
     """
 
@@ -50,6 +55,8 @@ class TorchModelProxy(BaseModelProxy):
         scheduler: LRScheduler | None = None,
         model_name: str | None = None,
         device: str | torch.device | None = None,
+        use_amp: bool = False,
+        amp_dtype: torch.dtype | None = None,
     ) -> None:
         self._device = resolve_device(device)
         self._model = model.to(self._device)
@@ -57,7 +64,19 @@ class TorchModelProxy(BaseModelProxy):
         self._loss_fn = loss_fn
         self._scheduler = scheduler
         self._model_name = model_name or type(model).__name__
+        self._use_amp = use_amp
+        self._amp_dtype = amp_dtype or self._default_amp_dtype()
+        self._scaler = torch.amp.GradScaler(
+            self._device.type, enabled=use_amp and self._amp_dtype == torch.float16
+        )
         super().__init__()
+
+    def _default_amp_dtype(self) -> torch.dtype:
+        if self._device.type == "cuda" and torch.cuda.is_bf16_supported():
+            return torch.bfloat16
+        if self._device.type == "cuda":
+            return torch.float16
+        return torch.bfloat16
 
     @property
     def device(self) -> torch.device:
@@ -82,6 +101,10 @@ class TorchModelProxy(BaseModelProxy):
         scheduler_state_dict = checkpoint.get("scheduler_state_dict")
         if scheduler_state_dict is not None and self.has_scheduler():
             self._scheduler.load_state_dict(scheduler_state_dict)  # type: ignore
+
+        scaler_state_dict = checkpoint.get("scaler_state_dict")
+        if scaler_state_dict is not None:
+            self._scaler.load_state_dict(scaler_state_dict)
 
         return checkpoint["epoch"]
 
@@ -125,6 +148,7 @@ class TorchModelProxy(BaseModelProxy):
             "scheduler_state_dict": (
                 self._scheduler.state_dict() if self.has_scheduler() else None  # type: ignore
             ),
+            "scaler_state_dict": self._scaler.state_dict(),
             "loss": loss,
             "mlinstruct_version": __version__,
         }
@@ -184,11 +208,17 @@ class TorchModelProxy(BaseModelProxy):
         self._model.train()
         for batch in train_data:
             X_batch, Y_batch = move_to_device(batch, self._device)
-            Y_pred = self._model(X_batch)
-            loss = self._loss_fn(Y_pred, Y_batch)
             self._optimizer.zero_grad()
-            loss.backward()
-            self._optimizer.step()
+
+            with torch.autocast(
+                device_type=self._device.type, dtype=self._amp_dtype, enabled=self._use_amp
+            ):
+                Y_pred = self._model(X_batch)
+                loss = self._loss_fn(Y_pred, Y_batch)
+
+            self._scaler.scale(loss).backward()
+            self._scaler.step(self._optimizer)
+            self._scaler.update()
 
             running_loss += loss.item()
 
