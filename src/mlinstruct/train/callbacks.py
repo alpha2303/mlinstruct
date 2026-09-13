@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .train_result import TrainResult
-    from .trainer.base_trainer import BaseTrainer
+    from mlinstruct.train.train_result import TrainResult
+    from mlinstruct.train.trainer.base_trainer import BaseTrainer
 
 
 class TrainerCallback:

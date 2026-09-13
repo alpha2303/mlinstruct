@@ -1,7 +1,7 @@
 import matplotlib.axes as axes
 import numpy as np
 
-from .base_plotter import BasePlotter
+from mlinstruct.evaluate.plots.base_plotter import BasePlotter
 
 
 class ROCPlotter(BasePlotter):

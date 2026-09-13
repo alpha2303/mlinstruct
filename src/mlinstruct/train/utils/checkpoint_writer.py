@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from ..model_proxy import BaseModelProxy
+from mlinstruct.train.model_proxy import BaseModelProxy
 
 _TIMESTAMP_FORMAT: str = "%Y%m%d_%H%M%S"
 

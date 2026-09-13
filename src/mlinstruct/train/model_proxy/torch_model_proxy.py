@@ -9,10 +9,10 @@ from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
-from ... import __version__
-from ...utils.exception import ModelProxyError
-from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..utils.device import move_to_device, resolve_device
+from mlinstruct import __version__
+from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.train.utils.device import move_to_device, resolve_device
+from mlinstruct.utils.exception import ModelProxyError
 
 if TYPE_CHECKING:
     import torchinfo

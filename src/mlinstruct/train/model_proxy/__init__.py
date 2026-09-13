@@ -1,7 +1,7 @@
 from typing import Any
 
-from ...utils.optional_deps import require
-from .base_model_proxy import BaseModelProxy
+from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.utils.optional_deps import require
 
 __all__ = ["BaseModelProxy", "TorchModelProxy"]
 
@@ -9,7 +9,7 @@ __all__ = ["BaseModelProxy", "TorchModelProxy"]
 def __getattr__(name: str) -> Any:
     if name == "TorchModelProxy":
         require("torch", extra="torch", symbol="TorchModelProxy")
-        from .torch_model_proxy import TorchModelProxy
+        from mlinstruct.train.model_proxy.torch_model_proxy import TorchModelProxy
 
         return TorchModelProxy
 

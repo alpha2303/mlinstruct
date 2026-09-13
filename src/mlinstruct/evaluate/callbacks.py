@@ -2,8 +2,8 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from ..train.callbacks import TrainerCallback
-from .metrics.classification.confusion_matrix import ConfusionMatrix
+from mlinstruct.evaluate.metrics.classification.confusion_matrix import ConfusionMatrix
+from mlinstruct.train.callbacks import TrainerCallback
 
 
 def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:

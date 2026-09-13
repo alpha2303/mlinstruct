@@ -4,13 +4,13 @@ from pathlib import Path
 
 import numpy as np
 
-from ...utils.exception import TrainerError
-from ..callbacks import TrainerCallback
-from ..data_payload.base_data_payload import BaseDataPayload
-from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..train_result import TrainResult
-from ..trainer.base_trainer import DEFAULT_SAVE_PATH, BaseTrainer
-from ..utils.early_stopper import EarlyStopper
+from mlinstruct.train.callbacks import TrainerCallback
+from mlinstruct.train.data_payload.base_data_payload import BaseDataPayload
+from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.train.train_result import TrainResult
+from mlinstruct.train.trainer.base_trainer import DEFAULT_SAVE_PATH, BaseTrainer
+from mlinstruct.train.utils.early_stopper import EarlyStopper
+from mlinstruct.utils.exception import TrainerError
 
 
 class DefaultTrainer(BaseTrainer):

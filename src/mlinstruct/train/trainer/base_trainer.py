@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Self
 
-from ..data_payload.base_data_payload import BaseDataPayload
-from ..model_proxy.base_model_proxy import BaseModelProxy
-from ..train_result import TrainResult
-from ..utils.checkpoint_writer import CheckpointWriter
-from ..utils.early_stopper import EarlyStopper
+from mlinstruct.train.data_payload.base_data_payload import BaseDataPayload
+from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.train.train_result import TrainResult
+from mlinstruct.train.utils.checkpoint_writer import CheckpointWriter
+from mlinstruct.train.utils.early_stopper import EarlyStopper
 
 DEFAULT_SAVE_PATH: Path = Path("./Models")
 

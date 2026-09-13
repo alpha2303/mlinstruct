@@ -3,7 +3,7 @@ from matplotlib import colormaps
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 
-from .base_plotter import BasePlotter
+from mlinstruct.evaluate.plots.base_plotter import BasePlotter
 
 DEFAULT_CMAP: Colormap = colormaps.get_cmap("Blues")
 

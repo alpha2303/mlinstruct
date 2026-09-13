@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader
 
-from ..data_payload.base_data_payload import BaseDataPayload
+from mlinstruct.train.data_payload.base_data_payload import BaseDataPayload
 
 
 class TorchDataPayload(BaseDataPayload):

@@ -5,10 +5,10 @@ import numpy as np
 from matplotlib.axes import Axes
 from sklearn.metrics import auc, roc_curve
 
-from ....utils.exception import IncompatibleDimsException
-from ...plots.roc_plotter import ROCPlotter
-from ..base_metrics import BaseMetrics
-from ..metric_utils import MetricUtils
+from mlinstruct.evaluate.metrics.base_metrics import BaseMetrics
+from mlinstruct.evaluate.metrics.metric_utils import MetricUtils
+from mlinstruct.evaluate.plots.roc_plotter import ROCPlotter
+from mlinstruct.utils.exception import IncompatibleDimsException
 
 
 def _compute_roc_curve(
