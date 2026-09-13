@@ -21,11 +21,8 @@ def _compute_confusion_matrix(
         pred_array (numpy.ndarray): The predicted labels.
         class_count (int): The number of classes.
     """
-    confusion_matrix: np.ndarray = np.zeros((class_count, class_count)).astype(int)
-
-    for i in range(len(truth_array)):
-        confusion_matrix[truth_array[i], pred_array[i]] += 1
-
+    confusion_matrix: np.ndarray = np.zeros((class_count, class_count), dtype=int)
+    np.add.at(confusion_matrix, (truth_array, pred_array), 1)
     return confusion_matrix
 
 
@@ -46,7 +43,11 @@ class ConfusionMatrix(BaseMetrics):
 
     @classmethod
     def from_predictions(
-        cls, y: np.ndarray, y_pred: np.ndarray, class_labels: Optional[list] = None
+        cls,
+        y: np.ndarray,
+        y_pred: np.ndarray,
+        num_classes: Optional[int] = None,
+        class_labels: Optional[list] = None,
     ) -> Self:
         """
         Create an instance of the ConfusionMatrix from the true and predicted values.
@@ -54,6 +55,8 @@ class ConfusionMatrix(BaseMetrics):
         Args:
             y (numpy.ndarray): The true labels.
             y_pred (numpy.ndarray): The predicted labels.
+            num_classes (int, optional): The number of classes. Defaults to
+                max(y.max(), y_pred.max()) + 1.
             class_labels (list, optional): The class labels.
 
         Returns:
@@ -66,10 +69,16 @@ class ConfusionMatrix(BaseMetrics):
         if not MetricUtils.is_valid_input_dimensions(y, y_pred):
             raise IncompatibleDimsException(y.shape, y_pred.shape)
 
-        if not MetricUtils.is_valid_input_values(y, y_pred):
+        if y.shape[0] == 0:
             raise IncompatibleValuesException()
 
-        confusion_matrix = _compute_confusion_matrix(y, y_pred, len(np.unique(y)))
+        if num_classes is None:
+            num_classes = int(max(y.max(), y_pred.max())) + 1
+
+        if not MetricUtils.is_valid_input_values(y, y_pred, num_classes=num_classes):
+            raise IncompatibleValuesException()
+
+        confusion_matrix = _compute_confusion_matrix(y, y_pred, num_classes)
         return cls(confusion_matrix, class_labels)
 
     def as_ndarray(self) -> np.ndarray:
