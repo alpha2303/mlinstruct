@@ -1,23 +1,29 @@
 import pytest
 
-torch = pytest.importorskip("torch")
-
-from torch import nn, optim  # noqa: E402
-from torch.utils.data import DataLoader, TensorDataset, random_split  # noqa: E402
+from mlinstruct.utils.optional_deps import is_installed
 
 
 @pytest.fixture(autouse=True)
 def _seed_torch():
-    torch.manual_seed(0)
+    if is_installed("torch"):
+        import torch
+
+        torch.manual_seed(0)
 
 
 @pytest.fixture
 def tiny_model():
+    pytest.importorskip("torch")
+    from torch import nn
+
     return nn.Linear(4, 1)
 
 
 @pytest.fixture
 def tiny_loaders():
+    torch = pytest.importorskip("torch")
+    from torch.utils.data import DataLoader, TensorDataset, random_split
+
     inputs = torch.randn(64, 4)
     targets = inputs.sum(dim=1, keepdim=True) + 0.01 * torch.randn(64, 1)
     dataset = TensorDataset(inputs, targets)
@@ -31,6 +37,9 @@ def tiny_loaders():
 
 @pytest.fixture
 def proxy(tiny_model):
+    pytest.importorskip("torch")
+    from torch import nn, optim
+
     from mlinstruct.train.model_proxy import TorchModelProxy
 
     optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
@@ -39,6 +48,7 @@ def proxy(tiny_model):
 
 @pytest.fixture
 def payload(tiny_loaders):
+    pytest.importorskip("torch")
     from mlinstruct.train.data_payload import TorchDataPayload
 
     train_loader, val_loader, test_loader = tiny_loaders

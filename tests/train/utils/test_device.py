@@ -1,6 +1,8 @@
-import torch
+import pytest
 
-from mlinstruct.train.utils.device import move_to_device, resolve_device
+torch = pytest.importorskip("torch")
+
+from mlinstruct.train.utils.device import move_to_device, resolve_device  # noqa: E402
 
 
 def test_resolve_device_explicit_string():

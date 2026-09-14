@@ -2,15 +2,17 @@ import logging
 
 import numpy as np
 import pytest
-import torch
-from torch import optim
 
-from mlinstruct.evaluate.callbacks import MetricsCallback
-from mlinstruct.train.callbacks import TrainerCallback
-from mlinstruct.train.data_payload import TorchDataPayload
-from mlinstruct.train.model_proxy import TorchModelProxy
-from mlinstruct.train.trainer import DefaultTrainer, default_trainer
-from mlinstruct.utils.exception import TrainerError
+torch = pytest.importorskip("torch")
+
+from torch import optim  # noqa: E402
+
+from mlinstruct.evaluate.callbacks import MetricsCallback  # noqa: E402
+from mlinstruct.train.callbacks import TrainerCallback  # noqa: E402
+from mlinstruct.train.data_payload import TorchDataPayload  # noqa: E402
+from mlinstruct.train.model_proxy import TorchModelProxy  # noqa: E402
+from mlinstruct.train.trainer import DefaultTrainer, default_trainer  # noqa: E402
+from mlinstruct.utils.exception import TrainerError  # noqa: E402
 
 
 class RecordingCallback(TrainerCallback):
