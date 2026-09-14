@@ -12,7 +12,7 @@ __all__ = ["BaseTrainer", "EpochLoopTrainer", "DefaultTrainer", "KFoldTrainer", 
 def __getattr__(name: str) -> Any:
     if name == "GANTrainer":
         require("torch", extra="torch", symbol="GANTrainer")
-        from mlinstruct.train.trainer.torch_gan_trainer import GANTrainer
+        from mlinstruct.train.trainer.gan_trainer import GANTrainer
 
         return GANTrainer
 

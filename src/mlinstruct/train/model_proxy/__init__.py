@@ -16,7 +16,7 @@ def __getattr__(name: str) -> Any:
 
     if name == "GANModelProxy":
         require("torch", extra="torch", symbol="GANModelProxy")
-        from mlinstruct.train.model_proxy.torch_gan_model_proxy import GANModelProxy
+        from mlinstruct.train.model_proxy.gan_model_proxy import GANModelProxy
 
         return GANModelProxy
 

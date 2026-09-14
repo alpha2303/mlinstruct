@@ -6,7 +6,7 @@ torch = pytest.importorskip("torch")
 from torch import nn, optim  # noqa: E402
 
 from mlinstruct.train.model_proxy import GANModelProxy, OnnxExportable  # noqa: E402
-from mlinstruct.train.model_proxy.torch_gan_model_proxy import (  # noqa: E402
+from mlinstruct.train.model_proxy.gan_model_proxy import (  # noqa: E402
     bce_discriminator_loss,
     non_saturating_generator_loss,
 )

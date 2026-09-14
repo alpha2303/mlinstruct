@@ -4,7 +4,7 @@ from pathlib import Path
 
 from mlinstruct.train.callbacks import TrainerCallback
 from mlinstruct.train.gan_train_result import GANTrainResult
-from mlinstruct.train.model_proxy.torch_gan_model_proxy import GANModelProxy
+from mlinstruct.train.model_proxy.gan_model_proxy import GANModelProxy
 from mlinstruct.train.trainer.base_trainer import DEFAULT_SAVE_PATH
 from mlinstruct.train.trainer.epoch_loop_trainer import EpochLoopTrainer
 from mlinstruct.train.utils.checkpoint_writer import CheckpointWriter
