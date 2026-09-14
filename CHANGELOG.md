@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-09-13
+
+### Added
+- `KFoldTrainer` (`mlinstruct.train.trainer`), orchestrating K-Fold
+  cross-validation: trains one independent model per fold via a
+  caller-supplied `model_proxy_factory` and a delegate `BaseTrainer` per fold
+  (default `DefaultTrainer`), and aggregates results into a `KFoldResult`.
+  The default splitter is `sklearn.model_selection.KFold`; any
+  sklearn-shaped cross-validator can be substituted. Has zero torch
+  dependency — only fold *indices* are core-side; applying them to real
+  tensors is pushed into the data payload factory.
+- `KFoldResult` (`mlinstruct.train`), a frozen dataclass aggregating each
+  fold's `TrainResult` into `mean_val_loss`, `std_val_loss`, and
+  `best_fold_index`.
+- `torch_kfold_data_payload` (`mlinstruct.train.data_payload`), a helper that
+  turns a fold's `(train_idx, val_idx)` arrays into a `TorchDataPayload` via
+  `torch.utils.data.Subset`.
+
+### Fixed
+- `tests/train/conftest.py`'s blanket module-level `pytest.importorskip("torch")`
+  previously skipped collection of the entire `tests/train/` subtree
+  (including already torch-free tests) whenever torch was absent. It's now
+  pushed down into the individual fixtures that actually need torch, so
+  torch-free orchestration code gets real no-torch CI coverage.
+
 ## [0.4.0] - 2026-09-13
 
 ### Added
