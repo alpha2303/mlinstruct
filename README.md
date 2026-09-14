@@ -255,6 +255,7 @@ only the generator is exported, never the discriminator.
 | `TorchModelProxy` | `train.model_proxy` | Adapts a model, optimizer, loss, and optional scheduler to the trainer; owns device placement, AMP, and gradient clipping. |
 | `OnnxExportable` | `train.model_proxy` | Opt-in capability interface for backends that can export to ONNX; `TorchModelProxy` implements it. |
 | `DefaultTrainer` | `train.trainer` | Runs the epoch loop: training, validation, scheduler step, checkpointing, early stopping, callbacks. |
+| `EpochLoopTrainer` | `train.trainer` | Shared epoch-loop scaffolding (progress bar, callback fan-out, checkpoint-directory setup, `metrics_history`) that `DefaultTrainer` and `GANTrainer` both build on via three hooks. Zero torch dependency. |
 | `EarlyStopper` | `train.utils` | Stops training when validation loss plateaus. |
 | `CheckpointWriter` | `train.utils` | Writes checkpoints to a unique, per-run directory. |
 | `TrainResult` | `train` | Frozen dataclass returned by `trainer.train(...)`. |

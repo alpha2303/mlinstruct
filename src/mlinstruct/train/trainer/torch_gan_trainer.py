@@ -6,16 +6,18 @@ from mlinstruct.train.callbacks import TrainerCallback
 from mlinstruct.train.gan_train_result import GANTrainResult
 from mlinstruct.train.model_proxy.torch_gan_model_proxy import GANModelProxy
 from mlinstruct.train.trainer.base_trainer import DEFAULT_SAVE_PATH
+from mlinstruct.train.trainer.epoch_loop_trainer import EpochLoopTrainer
 from mlinstruct.train.utils.checkpoint_writer import CheckpointWriter
 
 
-class GANTrainer:
+class GANTrainer(EpochLoopTrainer):
     """Trains a vanilla (unconditional, single-G/single-D) GAN via a GANModelProxy.
 
     Does not subclass BaseTrainer: a GAN has no single scalar validation loss to
     checkpoint or early-stop on, so checkpointing here is cadence-based
     (checkpoint_interval, plus always the final epoch) rather than best-loss-based,
-    and no EarlyStopper is offered.
+    and no EarlyStopper is offered. Shares its epoch-loop/callback/checkpoint-writer
+    scaffolding with DefaultTrainer via EpochLoopTrainer.
 
     Reuses TrainerCallback.on_epoch_end(trainer, epoch, train_loss, val_loss) as-is,
     passing train_loss=avg_generator_loss, val_loss=avg_discriminator_loss, so every
@@ -59,21 +61,12 @@ class GANTrainer:
         self._train_data = train_data
         self._n_critic = n_critic
         self._checkpoint_interval = checkpoint_interval
-        self._checkpoint_writer = CheckpointWriter(save_dir_path, run_name=run_name)
-        self._logger = logger or logging.getLogger(__name__)
-        self._callbacks = callbacks
-        self._show_progress = show_progress
-
-    def _epoch_iterator(self, epochs: range):
-        if not self._show_progress:
-            return epochs
-
-        try:
-            from tqdm import tqdm
-        except ImportError:
-            return epochs
-
-        return tqdm(epochs, desc="Training")
+        super().__init__(
+            checkpoint_writer=CheckpointWriter(save_dir_path, run_name=run_name),
+            callbacks=callbacks,
+            show_progress=show_progress,
+            logger=logger,
+        )
 
     def _unpack_real_batch(self, batch):
         if isinstance(batch, tuple | list):
@@ -89,73 +82,60 @@ class GANTrainer:
         Returns:
             GANTrainResult: The result of the training process.
         """
-        if max_epochs <= 0:
-            raise ValueError("Max epochs must be positive number greater than 0.")
+        return super().train(max_epochs)
 
-        self._checkpoint_writer.regenerate_model_save_path()  # type: ignore
+    def _run_epoch(self, epoch_index: int) -> tuple[float, float]:
+        running_g_loss = 0.0
+        running_d_loss = 0.0
+        num_batches = 0
 
-        g_loss_list: list[float] = []
-        d_loss_list: list[float] = []
+        for batch in self._train_data:
+            real_batch = self._unpack_real_batch(batch)
+            g_loss, d_loss = self._model_proxy.train_one_batch(real_batch, n_critic=self._n_critic)
+            running_g_loss += g_loss
+            running_d_loss += d_loss
+            num_batches += 1
 
-        for callback in self._callbacks:
-            callback.on_train_start(self)
+        avg_g_loss = running_g_loss / num_batches
+        avg_d_loss = running_d_loss / num_batches
 
-        for epoch_index in self._epoch_iterator(range(1, max_epochs + 1)):
-            running_g_loss = 0.0
-            running_d_loss = 0.0
-            num_batches = 0
-
-            for batch in self._train_data:
-                real_batch = self._unpack_real_batch(batch)
-                g_loss, d_loss = self._model_proxy.train_one_batch(
-                    real_batch, n_critic=self._n_critic
-                )
-                running_g_loss += g_loss
-                running_d_loss += d_loss
-                num_batches += 1
-
-            avg_g_loss = running_g_loss / num_batches
-            avg_d_loss = running_d_loss / num_batches
-
-            self._logger.info(
-                f"Epoch {epoch_index}: Generator Loss = {avg_g_loss} | "
-                f"Discriminator Loss = {avg_d_loss}"
-            )
-
-            g_loss_list.append(avg_g_loss)
-            d_loss_list.append(avg_d_loss)
-
-            for callback in self._callbacks:
-                callback.on_epoch_end(self, epoch_index, avg_g_loss, avg_d_loss)
-
-            if epoch_index % self._checkpoint_interval == 0 or epoch_index == max_epochs:
-                stem = f"model_epoch_{epoch_index}_gloss_{avg_g_loss:.4f}_dloss_{avg_d_loss:.4f}"
-                self._model_proxy.save_weights(
-                    epoch_index,
-                    self._checkpoint_writer.get_model_save_path(),  # type: ignore
-                    stem,
-                    g_loss=avg_g_loss,
-                    d_loss=avg_d_loss,
-                )
-
-        model_save_path = self._checkpoint_writer.get_model_save_path().resolve()  # type: ignore
-        self._logger.info(f"Model checkpoints saved to {model_save_path}")
-
-        metrics_history: dict[str, list[float]] = {}
-        for callback in self._callbacks:
-            if hasattr(callback, "history"):
-                metrics_history.update(callback.history)
-
-        result = GANTrainResult(
-            model_name=self._model_proxy.get_model_name(),
-            model_save_path=model_save_path,
-            epochs=len(g_loss_list),
-            g_loss_list=g_loss_list,
-            d_loss_list=d_loss_list,
-            metrics_history=metrics_history,
+        self._logger.info(
+            f"Epoch {epoch_index}: Generator Loss = {avg_g_loss} | "
+            f"Discriminator Loss = {avg_d_loss}"
         )
 
-        for callback in self._callbacks:
-            callback.on_train_end(self, result)
+        return avg_g_loss, avg_d_loss
 
-        return result
+    def _checkpoint_policy(
+        self, epoch_index: int, metric_a: float, metric_b: float, is_final_epoch: bool
+    ) -> Path | None:
+        avg_g_loss, avg_d_loss = metric_a, metric_b
+        if epoch_index % self._checkpoint_interval == 0 or is_final_epoch:
+            stem = f"model_epoch_{epoch_index}_gloss_{avg_g_loss:.4f}_dloss_{avg_d_loss:.4f}"
+            return self._model_proxy.save_weights(
+                epoch_index,
+                self._checkpoint_writer.get_model_save_path(),  # type: ignore
+                stem,
+                g_loss=avg_g_loss,
+                d_loss=avg_d_loss,
+            )
+        return None
+
+    def _build_result(
+        self,
+        model_save_path: Path,
+        epochs_completed: int,
+        metric_a_list: list[float],
+        metric_b_list: list[float],
+        metrics_history: dict[str, list[float]],
+        best_checkpoint_path: Path | None,
+        stopped_early: bool,
+    ) -> GANTrainResult:
+        return GANTrainResult(
+            model_name=self._model_proxy.get_model_name(),
+            model_save_path=model_save_path,
+            epochs=epochs_completed,
+            g_loss_list=metric_a_list,
+            d_loss_list=metric_b_list,
+            metrics_history=metrics_history,
+        )

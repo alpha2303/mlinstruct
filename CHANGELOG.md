@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GANTrainResult` (`mlinstruct.train`), a frozen dataclass with
   `g_loss_list`/`d_loss_list` per epoch (deliberately no
   `best_val_loss`/`stopped_early`, which have no coherent GAN meaning).
+- `EpochLoopTrainer` (`mlinstruct.train.trainer`), a new shared base extracted
+  from `DefaultTrainer`/`GANTrainer`'s near-identical epoch loops: max-epochs
+  validation, checkpoint-directory setup, the tqdm-optional progress bar,
+  callback fan-out (`on_train_start`/`on_epoch_end`/`on_train_end`), the
+  `metrics_history` collection, and error logging. Subclasses implement three
+  hooks — `_run_epoch`, `_checkpoint_policy`, `_build_result` — plus optional
+  `_prepare_run`/`_after_epochs`/`_should_stop_early` overrides for
+  resume/held-out-eval/early-stopping. `DefaultTrainer` now inherits both
+  `BaseTrainer` (model_proxy/data_payload/early_stopper) and this; `GANTrainer`
+  inherits only this, since it has neither a single model_proxy nor a
+  meaningful validation loss to early-stop on. `KFoldTrainer` is unaffected —
+  it orchestrates other trainers per fold rather than running epochs itself,
+  so it doesn't fit this contract. Zero torch dependency; exported eagerly.
 - README "GAN training" section and API table entries.
 
 ### Fixed
