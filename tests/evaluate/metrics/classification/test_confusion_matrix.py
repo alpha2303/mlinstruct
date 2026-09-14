@@ -1,7 +1,9 @@
 from unittest import TestCase
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.axes import Axes
 from sklearn.metrics import confusion_matrix as sklearn_confusion_matrix
 
 from mlinstruct.evaluate.metrics.classification import ConfusionMatrix
@@ -76,6 +78,22 @@ class TestConfusionMatrix(TestCase):
         expected = np.zeros((5, 5), dtype=int)
         expected[0, 0] = expected[2, 2] = expected[4, 4] = 1
         self.assertTrue(np.array_equal(cm.as_ndarray(), expected))
+
+    def test_plot_creates_axes_when_none_given(self) -> None:
+        cm: ConfusionMatrix = ConfusionMatrix(self.confusion_matrix, class_labels=["A", "B", "C"])
+
+        ax = cm.plot()
+
+        self.assertIsInstance(ax, Axes)
+        self.assertEqual(ax.get_title(), "Confusion Matrix")
+
+    def test_plot_uses_given_axes(self) -> None:
+        cm: ConfusionMatrix = ConfusionMatrix(self.confusion_matrix, class_labels=["A", "B", "C"])
+        _, given_ax = plt.subplots()
+
+        returned_ax = cm.plot(ax=given_ax)
+
+        self.assertIs(returned_ax, given_ax)
 
 
 @pytest.mark.parametrize("seed", [0, 1, 2, 3])

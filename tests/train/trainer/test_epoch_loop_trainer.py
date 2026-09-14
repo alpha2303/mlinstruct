@@ -1,3 +1,6 @@
+import sys
+import types
+
 import pytest
 
 from mlinstruct.train.callbacks import TrainerCallback
@@ -153,3 +156,23 @@ def test_error_during_run_epoch_is_logged_and_reraised(save_dir):
 
     with pytest.raises(RuntimeError, match="boom"):
         trainer.train(max_epochs=1)
+
+
+def test_show_progress_with_tqdm_installed_wraps_epoch_iterator(save_dir, monkeypatch):
+    tqdm_calls: list[dict] = []
+
+    def fake_tqdm(iterable, desc=None):
+        tqdm_calls.append({"iterable": iterable, "desc": desc})
+        return iterable
+
+    fake_tqdm_module = types.SimpleNamespace(tqdm=fake_tqdm)
+    monkeypatch.setitem(sys.modules, "tqdm", fake_tqdm_module)
+
+    trainer = _RecordingEpochLoopTrainer(save_dir, show_progress=True)
+
+    trainer.train(max_epochs=2)
+
+    assert trainer.epochs_run == [1, 2]
+    assert len(tqdm_calls) == 1
+    assert tqdm_calls[0]["desc"] == "Training"
+    assert list(tqdm_calls[0]["iterable"]) == [1, 2]

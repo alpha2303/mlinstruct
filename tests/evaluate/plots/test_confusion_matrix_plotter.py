@@ -33,3 +33,27 @@ class TestConfusionMatrixPlotter(TestCase):
             cm_plotter.plot(self.test_ax, self.confusion_matrix, self.class_labels)
         except Exception as e:
             self.fail(f"Unexpected error occurred: {e}")
+
+    def test_default_class_labels_used_when_none_given(self) -> None:
+        cm_plotter = ConfusionMatrixPlotter()
+
+        try:
+            cm_plotter.plot(self.test_ax, self.confusion_matrix)
+        except Exception as e:
+            self.fail(f"Unexpected error occurred: {e}")
+
+        tick_labels = [label.get_text() for label in self.test_ax.get_xticklabels()]
+        self.assertEqual(tick_labels, ["0", "1", "2"])
+
+    def test_non_square_matrix_raises_value_error(self) -> None:
+        cm_plotter = ConfusionMatrixPlotter()
+        non_square_matrix = np.array([[1, 2, 3], [4, 5, 6]])
+
+        with self.assertRaises(ValueError):
+            cm_plotter.plot(self.test_ax, non_square_matrix)
+
+    def test_mismatched_class_labels_length_raises_value_error(self) -> None:
+        cm_plotter = ConfusionMatrixPlotter()
+
+        with self.assertRaises(ValueError):
+            cm_plotter.plot(self.test_ax, self.confusion_matrix, ["Only", "Two"])

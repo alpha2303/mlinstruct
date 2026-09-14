@@ -63,6 +63,20 @@ def test_lazy_getattr_unknown_name_raises_attribute_error():
         _ = model_proxy_module.DoesNotExist
 
 
+def test_data_payload_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.train.data_payload as data_payload_module
+
+    with pytest.raises(AttributeError):
+        _ = data_payload_module.DoesNotExist
+
+
+def test_trainer_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.train.trainer as trainer_module
+
+    with pytest.raises(AttributeError):
+        _ = trainer_module.DoesNotExist
+
+
 def test_kfold_trainer_importable_without_torch():
     result = _run_without_torch(
         "from mlinstruct.train.trainer import KFoldTrainer\n"

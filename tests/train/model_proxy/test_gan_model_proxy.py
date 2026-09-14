@@ -99,6 +99,20 @@ def test_save_weights_rejects_missing_dir(gan_proxy, save_dir):
         )
 
 
+def test_device_property_returns_configured_device(tiny_generator, tiny_discriminator):
+    proxy = GANModelProxy(
+        generator=tiny_generator,
+        discriminator=tiny_discriminator,
+        generator_optimizer=optim.SGD(tiny_generator.parameters(), lr=0.01),
+        discriminator_optimizer=optim.SGD(tiny_discriminator.parameters(), lr=0.01),
+        latent_dim=3,
+        device="cpu",
+    )
+
+    assert proxy.device == torch.device("cpu")
+    assert next(proxy._generator.parameters()).device == torch.device("cpu")
+
+
 def test_get_model_name_default_and_custom(tiny_generator, tiny_discriminator):
     default_proxy = GANModelProxy(
         generator=tiny_generator,
@@ -182,3 +196,11 @@ def test_export_onnx_exports_generator_only(gan_proxy, save_dir):
     (actual_output,) = session.run(None, {input_name: noise.numpy()})
 
     assert np.allclose(actual_output, expected_output, atol=1e-5)
+
+
+def test_export_onnx_rejects_missing_parent_dir(gan_proxy, save_dir):
+    missing_dir_path = save_dir / "does_not_exist" / "generator.onnx"
+    noise = gan_proxy.sample_noise(1)
+
+    with pytest.raises(ModelProxyError):
+        gan_proxy.export_onnx(missing_dir_path, noise)

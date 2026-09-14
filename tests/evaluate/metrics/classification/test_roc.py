@@ -1,9 +1,12 @@
 from unittest import TestCase
 
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from sklearn.metrics import roc_auc_score
 
 from mlinstruct.evaluate.metrics.classification import ROC
+from mlinstruct.utils.exception import IncompatibleDimsException
 
 
 class TestROC(TestCase):
@@ -19,3 +22,24 @@ class TestROC(TestCase):
     def test_auc_matches_sklearn_roc_auc_score(self) -> None:
         roc: ROC = ROC.from_predictions(self.y, self.y_pred)
         self.assertAlmostEqual(roc._auc, roc_auc_score(self.y, self.y_pred))
+
+    def test_from_predictions_invalid_dims_raises(self) -> None:
+        y_pred_invalid_dims = np.array([self.y_pred, self.y_pred])
+        with self.assertRaises(IncompatibleDimsException):
+            ROC.from_predictions(self.y, y_pred_invalid_dims)
+
+    def test_plot_creates_axes_when_none_given(self) -> None:
+        roc: ROC = ROC.from_predictions(self.y, self.y_pred)
+
+        ax = roc.plot()
+
+        self.assertIsInstance(ax, Axes)
+        self.assertEqual(ax.get_title(), "Receiver operating characteristic (ROC) curve")
+
+    def test_plot_uses_given_axes(self) -> None:
+        roc: ROC = ROC.from_predictions(self.y, self.y_pred)
+        _, given_ax = plt.subplots()
+
+        returned_ax = roc.plot(ax=given_ax)
+
+        self.assertIs(returned_ax, given_ax)

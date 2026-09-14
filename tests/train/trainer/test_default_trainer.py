@@ -90,6 +90,16 @@ def test_train_rejects_non_positive_epochs(proxy, payload, save_dir):
         trainer.train(max_epochs=0)
 
 
+def test_has_early_stopper_reflects_configuration(proxy, payload, save_dir):
+    trainer = DefaultTrainer(model_proxy=proxy, data_payload=payload, save_dir_path=save_dir)
+
+    assert trainer.has_early_stopper() is False
+
+    trainer.add_early_stop(patience=2, min_delta=0.01)
+
+    assert trainer.has_early_stopper() is True
+
+
 def test_early_stop_breaks_loop(proxy, payload, save_dir, mocker):
     mocker.patch.object(proxy, "train_one_epoch", return_value=0.5)
     mocker.patch.object(proxy, "validate", return_value=1.0)
