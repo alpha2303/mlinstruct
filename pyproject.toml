@@ -17,6 +17,10 @@ torch = [
     "torch>=2.6",
     "torchinfo>=1.8,<2",
 ]
+torch-cuda = [
+    "torch>=2.6",
+    "torchinfo>=1.8,<2",
+]
 progress = ["tqdm>=4.66,<5"]
 onnx = [
     "onnx>=1.16,<2",
@@ -35,6 +39,9 @@ test = [
 ]
 dev = ["ruff>=0.7,<1", "pyright>=1.1,<2"]
 
+[tool.uv]
+conflicts = [[{ extra = "torch" }, { extra = "torch-cuda" }]]
+
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
@@ -46,7 +53,10 @@ url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cpu" }
+torch = [
+    { index = "pytorch-cpu", extra = "torch" },
+    { index = "pytorch-cu126", extra = "torch-cuda" },
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]

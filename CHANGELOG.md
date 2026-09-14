@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   straight through to `torch.onnx.export`.
 - New `mlinstruct[onnx]` extra (`onnx`, `onnxscript`), kept separate from
   `mlinstruct[torch]` since export is opt-in.
+- New `torch-cuda` optional extra, declared as conflicting with `torch` via
+  `tool.uv.conflicts`. Under `uv`, `mlinstruct[torch-cuda]` resolves `torch`
+  from PyTorch's cu126 index automatically (`tool.uv.sources` keyed per
+  extra), instead of requiring a manual `--index` override. Plain `pip`
+  installs are unaffected — pip has no notion of `tool.uv.sources`, so pip
+  users needing the CUDA build still pass `--index-url` themselves.
 
 ## [0.3.0] - 2026-09-13
 
