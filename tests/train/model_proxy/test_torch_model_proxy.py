@@ -53,6 +53,11 @@ def test_validate_does_not_update_weights(proxy, tiny_loaders):
         assert torch.equal(value, after[key])
 
 
+def test_validate_rejects_non_dataloader(proxy):
+    with pytest.raises(ModelProxyError):
+        proxy.validate([1, 2, 3])
+
+
 def test_save_then_load_checkpoint_roundtrip(proxy, save_dir):
     original_state = {key: value.clone() for key, value in proxy._model.state_dict().items()}
     original_lr = proxy._optimizer.state_dict()["param_groups"][0]["lr"]
@@ -90,6 +95,26 @@ def test_checkpoint_contains_none_scheduler_state_when_absent(proxy, save_dir):
     checkpoint = torch.load(save_dir / "ckpt.pt", weights_only=True)
 
     assert checkpoint["scheduler_state_dict"] is None
+
+
+def test_load_checkpoint_restores_scheduler_state(tiny_model, save_dir):
+    optimizer = optim.SGD(tiny_model.parameters(), lr=0.01)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
+    proxy = TorchModelProxy(
+        model=tiny_model, optimizer=optimizer, loss_fn=nn.MSELoss(), scheduler=scheduler
+    )
+
+    scheduler.step()
+    saved_state = scheduler.state_dict()
+    proxy.save_weights(epoch=1, save_dir_path=save_dir, model_name="ckpt", loss=0.1)
+
+    scheduler.step()
+    scheduler.step()
+    assert scheduler.state_dict() != saved_state
+
+    proxy.load_checkpoint(save_dir / "ckpt.pt")
+
+    assert scheduler.state_dict() == saved_state
 
 
 def test_load_checkpoint_returns_epoch_and_keeps_train_mode(proxy, save_dir):
@@ -136,6 +161,11 @@ def test_save_weights_rejects_missing_dir(proxy, save_dir):
 
 def test_has_scheduler_false_by_default(proxy):
     assert proxy.has_scheduler() is False
+
+
+def test_scheduler_step_without_scheduler_raises(proxy):
+    with pytest.raises(ModelProxyError):
+        proxy.scheduler_step(avg_vloss=0.5)
 
 
 def test_scheduler_step_plateau_vs_step(tiny_model, mocker):
@@ -298,6 +328,11 @@ def test_predict_shapes_and_no_grad(proxy, tiny_loaders):
     assert isinstance(y_pred, np.ndarray)
     assert y_true.shape == y_pred.shape
     assert y_true.shape[0] == 16
+
+
+def test_predict_rejects_non_dataloader(proxy):
+    with pytest.raises(ModelProxyError):
+        proxy.predict([1, 2, 3])
 
 
 def test_lazy_import_returns_same_class_twice():

@@ -125,6 +125,17 @@ def test_result_model_save_path_exists(gan_proxy, real_samples_loader, save_dir)
     assert result.model_save_path.exists()
 
 
+def test_unpack_real_batch_returns_bare_tensor_unchanged(gan_proxy, real_samples_loader, save_dir):
+    trainer = GANTrainer(
+        model_proxy=gan_proxy, train_data=real_samples_loader, save_dir_path=save_dir
+    )
+    batch = torch.randn(4, 4)
+
+    result = trainer._unpack_real_batch(batch)
+
+    assert result is batch
+
+
 def test_show_progress_without_tqdm_does_not_raise(
     gan_proxy, real_samples_loader, save_dir, monkeypatch
 ):
