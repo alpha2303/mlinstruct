@@ -1,9 +1,10 @@
 from typing import Any
 
 from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.train.model_proxy.onnx_exportable import OnnxExportable
 from mlinstruct.utils.optional_deps import require
 
-__all__ = ["BaseModelProxy", "TorchModelProxy"]
+__all__ = ["BaseModelProxy", "OnnxExportable", "TorchModelProxy"]
 
 
 def __getattr__(name: str) -> Any:
