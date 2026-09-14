@@ -1,11 +1,11 @@
 # mlinstruct
 
-A small, readable PyTorch training loop and evaluation toolkit — not a
-Lightning competitor. `mlinstruct` gives you a `Trainer` you can actually
-read end to end in a few minutes: a data payload, a model proxy, a training
-loop with checkpointing and early stopping, and a handful of evaluation
-metrics and plots. Drop it into a personal project instead of writing the
-same training loop from scratch again.
+A small, readable PyTorch training loop and evaluation toolkit.
+`mlinstruct` gives you a `Trainer` you can actually read end to end in a
+few minutes: a data payload, a model proxy, a training loop with
+checkpointing and early stopping, and a handful of evaluation metrics and
+plots. Drop it into a personal project instead of writing the same
+training loop from scratch again.
 
 The core (`evaluate`, `TrainResult`, `EarlyStopper`, `CheckpointWriter`) is
 framework-agnostic and has no dependency on PyTorch. The `TorchModelProxy` /
