@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-13
+
+### Added
+- `OnnxExportable`, a pure-Python capability ABC (no framework dependency)
+  that a backend-specific `ModelProxy` can multiply-inherit alongside
+  `BaseModelProxy` to opt into ONNX export. Exported from
+  `mlinstruct.train.model_proxy`.
+- `TorchModelProxy.export_onnx(save_path, input_sample, *, dynamo=True, **kwargs)`,
+  implementing `OnnxExportable` via `torch.onnx.export`. Restores the model's
+  original train/eval mode after exporting; extra keyword arguments pass
+  straight through to `torch.onnx.export`.
+- New `mlinstruct[onnx]` extra (`onnx`, `onnxscript`), kept separate from
+  `mlinstruct[torch]` since export is opt-in.
+
 ## [0.3.0] - 2026-09-13
 
 ### Added
