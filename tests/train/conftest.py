@@ -53,3 +53,44 @@ def payload(tiny_loaders):
 
     train_loader, val_loader, test_loader = tiny_loaders
     return TorchDataPayload(train_data=train_loader, val_data=val_loader, test_data=test_loader)
+
+
+@pytest.fixture
+def tiny_generator():
+    pytest.importorskip("torch")
+    from torch import nn
+
+    return nn.Sequential(nn.Linear(3, 4), nn.Tanh())
+
+
+@pytest.fixture
+def tiny_discriminator():
+    pytest.importorskip("torch")
+    from torch import nn
+
+    return nn.Sequential(nn.Linear(4, 1), nn.Sigmoid())
+
+
+@pytest.fixture
+def gan_proxy(tiny_generator, tiny_discriminator):
+    pytest.importorskip("torch")
+    from torch import optim
+
+    from mlinstruct.train.model_proxy import GANModelProxy
+
+    return GANModelProxy(
+        generator=tiny_generator,
+        discriminator=tiny_discriminator,
+        generator_optimizer=optim.SGD(tiny_generator.parameters(), lr=0.01),
+        discriminator_optimizer=optim.SGD(tiny_discriminator.parameters(), lr=0.01),
+        latent_dim=3,
+    )
+
+
+@pytest.fixture
+def real_samples_loader():
+    torch = pytest.importorskip("torch")
+    from torch.utils.data import DataLoader, TensorDataset
+
+    dataset = TensorDataset(torch.randn(32, 4))
+    return DataLoader(dataset, batch_size=8)
