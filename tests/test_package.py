@@ -61,3 +61,12 @@ def test_lazy_getattr_unknown_name_raises_attribute_error():
 
     with pytest.raises(AttributeError):
         _ = model_proxy_module.DoesNotExist
+
+
+def test_kfold_trainer_importable_without_torch():
+    result = _run_without_torch(
+        "from mlinstruct.train.trainer import KFoldTrainer\n"
+        "from mlinstruct.train import KFoldResult\n"
+    )
+
+    assert result.returncode == 0, result.stderr

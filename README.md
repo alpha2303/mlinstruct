@@ -162,6 +162,50 @@ deliberately doesn't pin its own names for these since torch's exporter API
 has been shifting release to release. Pass `dynamo=False` as an escape hatch
 for models that don't trace cleanly under the default dynamo-based exporter.
 
+## K-Fold cross-validation
+
+`KFoldTrainer` orchestrates training one independent model per cross-validation
+fold and aggregates the results. It has zero dependency on torch — the
+splitter (`sklearn.model_selection.KFold` by default, or any sklearn-shaped
+cross-validator) only ever sees integer indices; applying those indices to
+real data is your `data_payload_factory`'s job:
+
+```python
+from functools import partial
+
+from sklearn.model_selection import KFold
+
+from mlinstruct.train.data_payload import torch_kfold_data_payload
+from mlinstruct.train.trainer import KFoldTrainer
+
+
+def model_proxy_factory():
+    model = nn.Linear(4, 1)
+    return TorchModelProxy(
+        model=model, optimizer=optim.SGD(model.parameters(), lr=0.01), loss_fn=nn.MSELoss()
+    )
+
+
+kfold_trainer = KFoldTrainer(
+    model_proxy_factory=model_proxy_factory,
+    data_payload_factory=partial(
+        torch_kfold_data_payload, dataset=TensorDataset(inputs, targets), batch_size=16
+    ),
+    X=inputs,
+    cv=KFold(n_splits=5, shuffle=True, random_state=0),
+)
+
+kfold_result = kfold_trainer.train(max_epochs=20)
+print(f"mean val loss: {kfold_result.mean_val_loss:.4f} +/- {kfold_result.std_val_loss:.4f}")
+print(f"best fold: {kfold_result.best_fold_index}")
+```
+
+`model_proxy_factory` is called once per fold and must return a freshly
+initialized proxy — reusing an already-trained one would leak information
+between folds. Per-fold training is delegated to a `trainer_factory` (default:
+a plain `DefaultTrainer`), so a caller can opt any fold into early stopping or
+`MetricsCallback` by supplying their own.
+
 ## API overview
 
 | Class | Module | Purpose |
@@ -173,6 +217,9 @@ for models that don't trace cleanly under the default dynamo-based exporter.
 | `EarlyStopper` | `train.utils` | Stops training when validation loss plateaus. |
 | `CheckpointWriter` | `train.utils` | Writes checkpoints to a unique, per-run directory. |
 | `TrainResult` | `train` | Frozen dataclass returned by `trainer.train(...)`. |
+| `KFoldTrainer` | `train.trainer` | Orchestrates K-Fold cross-validation: one model per fold via a delegate `BaseTrainer`, aggregated into a `KFoldResult`. Zero torch dependency. |
+| `KFoldResult` | `train` | Frozen dataclass aggregating per-fold `TrainResult`s (mean/std validation loss, best fold). |
+| `torch_kfold_data_payload` | `train.data_payload` | Builds a `TorchDataPayload` from fold indices via `torch.utils.data.Subset`. |
 | `TrainerCallback` | `train.callbacks` | Base class for `on_train_start` / `on_epoch_end` / `on_train_end` hooks. |
 | `MetricsCallback` | `evaluate.callbacks` | Computes named metrics on a loader every epoch. |
 | `ConfusionMatrix`, `ROC` | `evaluate.metrics.classification` | Classification metrics with a `.plot()`. |
@@ -192,8 +239,8 @@ make sure the core package keeps importing without the extra installed.
 
 ## Backlog
 
-Not currently planned, but tracked: KFold cross-validation, a GAN trainer,
-and a second (non-PyTorch) backend. A second backend would follow the same
-capability-interface pattern `OnnxExportable` established — implement the
-capability on its own `ModelProxy` in whatever terms fit that framework,
-without touching the trainer or `BaseModelProxy`.
+Not currently planned, but tracked: a GAN trainer, and a second (non-PyTorch)
+backend. A second backend would follow the same capability-interface pattern
+`OnnxExportable` established — implement the capability on its own
+`ModelProxy` in whatever terms fit that framework, without touching the
+trainer or `BaseModelProxy`.

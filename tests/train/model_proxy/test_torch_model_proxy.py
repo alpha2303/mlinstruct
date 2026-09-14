@@ -1,11 +1,13 @@
 import numpy as np
 import pytest
-import torch
-import torchinfo
-from torch import nn, optim
 
-from mlinstruct.train.model_proxy import TorchModelProxy
-from mlinstruct.utils.exception import ModelProxyError
+torch = pytest.importorskip("torch")
+
+import torchinfo  # noqa: E402
+from torch import nn, optim  # noqa: E402
+
+from mlinstruct.train.model_proxy import TorchModelProxy  # noqa: E402
+from mlinstruct.utils.exception import ModelProxyError  # noqa: E402
 
 onnxruntime = pytest.importorskip("onnxruntime")
 
