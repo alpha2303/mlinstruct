@@ -22,14 +22,23 @@ pip install mlinstruct
 pip install mlinstruct[torch]
 ```
 
-For a CUDA build with `uv`, point at PyTorch's CUDA index instead of the
-default CPU one:
+For a CUDA build, use the `torch-cuda` extra instead of `torch` — it resolves
+`torch` from PyTorch's cu126 index automatically (via `uv`'s per-extra
+`tool.uv.sources`, already configured in this project's `pyproject.toml`):
 
 ```bash
-uv add mlinstruct[torch] --index https://download.pytorch.org/whl/cu126
+uv add mlinstruct[torch-cuda]
 ```
 
-Requires Python >= 3.12. `mlinstruct[torch]` requires `torch>=2.6`.
+`torch` and `torch-cuda` are declared as conflicting extras, so `uv` refuses
+to install both at once. This only works through `uv`; plain `pip install
+mlinstruct[torch-cuda]` installs the same PyPI `torch` as `mlinstruct[torch]`
+since pip has no notion of `tool.uv.sources` — pip users who need the cu126
+build should pass `--index-url https://download.pytorch.org/whl/cu126`
+themselves.
+
+Requires Python >= 3.12. `mlinstruct[torch]` / `mlinstruct[torch-cuda]`
+require `torch>=2.6`.
 
 ## Quickstart
 

@@ -1,6 +1,6 @@
 [project]
 name = "mlinstruct"
-version = "0.3.0"
+version = "0.3.1"
 description = "Python library for managing ML model training instances and evaluation graph generation"
 readme = "README.md"
 authors = [{ name = "Rahul Pavithran", email = "rahul.pavi@outlook.com" }]
@@ -17,6 +17,10 @@ torch = [
     "torch>=2.6",
     "torchinfo>=1.8,<2",
 ]
+torch-cuda = [
+    "torch>=2.6",
+    "torchinfo>=1.8,<2",
+]
 progress = ["tqdm>=4.66,<5"]
 
 [project.urls]
@@ -25,6 +29,9 @@ repository = "https://github.com/alpha2303/mlinstruct"
 [dependency-groups]
 test = ["pytest<9.0.0,>=8.1.1", "pytest-mock<4.0.0,>=3.14.0", "pytest-cov<7.0.0,>=5.0.0"]
 dev = ["ruff>=0.7,<1", "pyright>=1.1,<2"]
+
+[tool.uv]
+conflicts = [[{ extra = "torch" }, { extra = "torch-cuda" }]]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -37,7 +44,10 @@ url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cpu" }
+torch = [
+    { index = "pytorch-cpu", extra = "torch" },
+    { index = "pytorch-cu126", extra = "torch-cuda" },
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
