@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-09-13
+
+### Added
+- `GANModelProxy` (`mlinstruct.train.model_proxy`), a new, independent proxy
+  class for a vanilla (unconditional, single-generator/single-discriminator)
+  GAN — two networks, two optimizers, no single scalar validation loss, so it
+  does not implement `BaseModelProxy`. `train_one_batch` runs `n_critic`
+  discriminator steps then one generator step, using swappable
+  `generator_loss_fn`/`discriminator_loss_fn` callables (defaults:
+  non-saturating generator loss, BCE discriminator loss). Implements
+  `OnnxExportable`, exporting only the generator.
+- `GANTrainer` (`mlinstruct.train.trainer`), a new, independent trainer for
+  `GANModelProxy` — cadence-based checkpointing (`checkpoint_interval`, plus
+  always the final epoch) instead of best-loss-based, no `EarlyStopper`.
+  Reuses `TrainerCallback.on_epoch_end` unmodified, passing generator loss as
+  `train_loss` and discriminator loss as `val_loss`.
+- `GANTrainResult` (`mlinstruct.train`), a frozen dataclass with
+  `g_loss_list`/`d_loss_list` per epoch (deliberately no
+  `best_val_loss`/`stopped_early`, which have no coherent GAN meaning).
+- README "GAN training" section and API table entries.
+
+### Fixed
+- `TrainerCallback`'s hooks are now typed structurally (`Any`) instead of to
+  `BaseTrainer`/`TrainResult`, since `GANTrainer`/`GANTrainResult` reuse the
+  same hooks by duck typing and pinning the type to one hierarchy was
+  inaccurate for the other.
+
 ## [0.5.0] - 2026-09-13
 
 ### Added
