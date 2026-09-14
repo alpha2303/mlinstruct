@@ -70,3 +70,17 @@ def test_kfold_trainer_importable_without_torch():
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_gan_model_proxy_without_torch_extra_raises_import_error():
+    result = _run_without_torch("from mlinstruct.train.model_proxy import GANModelProxy\n")
+
+    assert result.returncode != 0
+    assert "mlinstruct[torch]" in result.stderr
+
+
+def test_gan_trainer_without_torch_extra_raises_import_error():
+    result = _run_without_torch("from mlinstruct.train.trainer import GANTrainer\n")
+
+    assert result.returncode != 0
+    assert "mlinstruct[torch]" in result.stderr

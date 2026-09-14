@@ -9,11 +9,12 @@ from mlinstruct.train.data_payload.base_data_payload import BaseDataPayload
 from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
 from mlinstruct.train.train_result import TrainResult
 from mlinstruct.train.trainer.base_trainer import DEFAULT_SAVE_PATH, BaseTrainer
+from mlinstruct.train.trainer.epoch_loop_trainer import EpochLoopTrainer
 from mlinstruct.train.utils.early_stopper import EarlyStopper
 from mlinstruct.utils.exception import TrainerError
 
 
-class DefaultTrainer(BaseTrainer):
+class DefaultTrainer(BaseTrainer, EpochLoopTrainer):
     """Default implementation of the trainer, for use with PyTorch models.
 
     Args:
@@ -45,28 +46,24 @@ class DefaultTrainer(BaseTrainer):
         callbacks: Sequence[TrainerCallback] = (),
         show_progress: bool = False,
     ) -> None:
-        super().__init__(
+        BaseTrainer.__init__(
+            self,
             model_proxy=model_proxy,
             data_payload=data_payload,
             early_stopper=early_stopper,
             save_dir_path=save_dir_path,
             run_name=run_name,
         )
-        self._logger: logging.Logger = logger or logging.getLogger(__name__)
-        self._callbacks: Sequence[TrainerCallback] = callbacks
-        self._show_progress: bool = show_progress
+        EpochLoopTrainer.__init__(
+            self,
+            checkpoint_writer=self._checkpoint_writer,
+            callbacks=callbacks,
+            show_progress=show_progress,
+            logger=logger,
+        )
+        self._resume_from: Path | None = None
+        self._best_vloss: float = np.inf
         self._validate_trainer_attrs()
-
-    def _epoch_iterator(self, epochs: range):
-        if not self._show_progress:
-            return epochs
-
-        try:
-            from tqdm import tqdm
-        except ImportError:
-            return epochs
-
-        return tqdm(epochs, desc="Training")
 
     def train(self, max_epochs: int, resume_from: Path | None = None) -> TrainResult:
         """Train the model.
@@ -83,94 +80,72 @@ class DefaultTrainer(BaseTrainer):
         Raises:
             InitException: If any of the required trainer attributes are not initialized.
         """
+        self._resume_from = resume_from
+        return EpochLoopTrainer.train(self, max_epochs)
 
-        if max_epochs <= 0:
-            raise ValueError("Max epochs must be positive number greater than 0.")
+    def _prepare_run(self) -> int:
+        self._best_vloss = np.inf
+        if self._resume_from is not None:
+            return self._model_proxy.load_checkpoint(self._resume_from) + 1
+        return 1
 
-        best_vloss: float = np.inf
-        best_checkpoint_path: Path | None = None
-        stopped_early: bool = False
-        train_loss_list, val_loss_list = [], []
+    def _run_epoch(self, epoch_index: int) -> tuple[float, float]:
+        avg_loss = self._model_proxy.train_one_epoch(self._data_payload.get_train_data())
+        avg_vloss = self._model_proxy.validate(self._data_payload.get_val_data())
 
-        self._checkpoint_writer.regenerate_model_save_path()  # type: ignore
+        self._logger.info(
+            f"Epoch {epoch_index}: Training Loss = {avg_loss} | "
+            f"Validation Loss = {avg_vloss} | "
+            f"Learning Rate = {self._model_proxy.get_lr()}"
+        )
 
-        start_epoch: int = 1
-        if resume_from is not None:
-            start_epoch = self._model_proxy.load_checkpoint(resume_from) + 1
+        if self._model_proxy.has_scheduler():
+            self._model_proxy.scheduler_step(avg_vloss=avg_vloss)
 
-        for callback in self._callbacks:
-            callback.on_train_start(self)
+        return avg_loss, avg_vloss
 
-        epochs_completed: int = start_epoch - 1
-        try:
-            for epoch_index in self._epoch_iterator(range(start_epoch, max_epochs + 1)):
-                avg_loss = self._model_proxy.train_one_epoch(self._data_payload.get_train_data())
-
-                avg_vloss = self._model_proxy.validate(self._data_payload.get_val_data())
-
-                self._logger.info(
-                    f"Epoch {epoch_index}: Training Loss = {avg_loss} | "
-                    f"Validation Loss = {avg_vloss} | "
-                    f"Learning Rate = {self._model_proxy.get_lr()}"
-                )
-
-                train_loss_list.append(avg_loss)
-                val_loss_list.append(avg_vloss)
-
-                for callback in self._callbacks:
-                    callback.on_epoch_end(self, epoch_index, avg_loss, avg_vloss)
-
-                if self._model_proxy.has_scheduler():
-                    self._model_proxy.scheduler_step(avg_vloss=avg_vloss)
-
-                if avg_vloss < best_vloss:
-                    best_vloss = avg_vloss
-
-                    best_checkpoint_path = self._checkpoint_writer.create_checkpoint(
-                        self._model_proxy, epoch_index, avg_vloss
-                    )
-
-                epochs_completed = epoch_index
-
-                if self._early_stopper and self._early_stopper.early_stop(avg_vloss):
-                    self._logger.info(f"Early stop triggered at epoch: {epoch_index}")
-                    stopped_early = True
-                    break
-
-            if self._data_payload.has_test_data():
-                avg_tloss = self._model_proxy.validate(
-                    self._data_payload.get_test_data()  # type: ignore
-                )
-                self._logger.info(f"Average Test Loss: {avg_tloss}")
-
-            model_save_path = self._checkpoint_writer.get_model_save_path().resolve()  # type: ignore
-            self._logger.info(f"Model checkpoints saved to {model_save_path}")
-
-            metrics_history: dict[str, list[float]] = {}
-            for callback in self._callbacks:
-                if hasattr(callback, "history"):
-                    metrics_history.update(callback.history)
-
-            result = TrainResult(
-                model_name=self._model_proxy.get_model_name(),
-                model_save_path=model_save_path,
-                epochs=epochs_completed,
-                train_loss_list=train_loss_list,
-                val_loss_list=val_loss_list,
-                best_val_loss=best_vloss,
-                best_checkpoint_path=best_checkpoint_path,
-                stopped_early=stopped_early,
-                metrics_history=metrics_history,
+    def _checkpoint_policy(
+        self, epoch_index: int, metric_a: float, metric_b: float, is_final_epoch: bool
+    ) -> Path | None:
+        avg_vloss = metric_b
+        if avg_vloss < self._best_vloss:
+            self._best_vloss = avg_vloss
+            return self._checkpoint_writer.create_checkpoint(  # type: ignore
+                self._model_proxy, epoch_index, avg_vloss
             )
+        return None
 
-            for callback in self._callbacks:
-                callback.on_train_end(self, result)
+    def _should_stop_early(self, metric_a: float, metric_b: float) -> bool:
+        return bool(self._early_stopper and self._early_stopper.early_stop(metric_b))
 
-            return result
+    def _after_epochs(self) -> None:
+        if self._data_payload.has_test_data():
+            avg_tloss = self._model_proxy.validate(
+                self._data_payload.get_test_data()  # type: ignore
+            )
+            self._logger.info(f"Average Test Loss: {avg_tloss}")
 
-        except Exception as e:
-            self._logger.error(f"Error during training: {str(e)}")
-            raise
+    def _build_result(
+        self,
+        model_save_path: Path,
+        epochs_completed: int,
+        metric_a_list: list[float],
+        metric_b_list: list[float],
+        metrics_history: dict[str, list[float]],
+        best_checkpoint_path: Path | None,
+        stopped_early: bool,
+    ) -> TrainResult:
+        return TrainResult(
+            model_name=self._model_proxy.get_model_name(),
+            model_save_path=model_save_path,
+            epochs=epochs_completed,
+            train_loss_list=metric_a_list,
+            val_loss_list=metric_b_list,
+            best_val_loss=self._best_vloss,
+            best_checkpoint_path=best_checkpoint_path,
+            stopped_early=stopped_early,
+            metrics_history=metrics_history,
+        )
 
     def _validate_trainer_attrs(self) -> None:
         """Validate that all required trainer attributes are initialized.

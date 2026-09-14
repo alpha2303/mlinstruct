@@ -206,6 +206,47 @@ between folds. Per-fold training is delegated to a `trainer_factory` (default:
 a plain `DefaultTrainer`), so a caller can opt any fold into early stopping or
 `MetricsCallback` by supplying their own.
 
+## GAN training
+
+`GANModelProxy` + `GANTrainer` train a vanilla (unconditional, single-generator/
+single-discriminator) GAN, alternating `n_critic` discriminator steps with one
+generator step per batch. In scope: swappable BCE/non-saturating losses via
+plain callables. Out of scope for now: gradient penalty (WGAN-GP), conditional
+GANs, and multi-generator/multi-discriminator topologies — see Backlog.
+
+```python
+from torch import nn, optim
+
+from mlinstruct.train.model_proxy import GANModelProxy
+from mlinstruct.train.trainer import GANTrainer
+
+latent_dim = 16
+
+generator = nn.Sequential(nn.Linear(latent_dim, 64), nn.ReLU(), nn.Linear(64, 4), nn.Tanh())
+discriminator = nn.Sequential(nn.Linear(4, 64), nn.ReLU(), nn.Linear(64, 1), nn.Sigmoid())
+
+gan_proxy = GANModelProxy(
+    generator=generator,
+    discriminator=discriminator,
+    generator_optimizer=optim.Adam(generator.parameters(), lr=2e-4),
+    discriminator_optimizer=optim.Adam(discriminator.parameters(), lr=2e-4),
+    latent_dim=latent_dim,
+)
+
+gan_trainer = GANTrainer(model_proxy=gan_proxy, train_data=real_samples_loader, n_critic=1)
+result = gan_trainer.train(max_epochs=50)
+print(f"g_loss={result.g_loss_list[-1]:.4f} d_loss={result.d_loss_list[-1]:.4f}")
+
+samples = gan_proxy.generate(n_samples=16)
+```
+
+Checkpointing is cadence-based (`checkpoint_interval`, default every epoch,
+plus always the final epoch) rather than best-loss-based — there is no
+non-arbitrary "best" adversarial-loss epoch, so no `EarlyStopper` is offered
+either. The trained generator can be exported to ONNX exactly like
+`TorchModelProxy` (`gan_proxy.export_onnx(path, gan_proxy.sample_noise(n))`) —
+only the generator is exported, never the discriminator.
+
 ## API overview
 
 | Class | Module | Purpose |
@@ -214,13 +255,17 @@ a plain `DefaultTrainer`), so a caller can opt any fold into early stopping or
 | `TorchModelProxy` | `train.model_proxy` | Adapts a model, optimizer, loss, and optional scheduler to the trainer; owns device placement, AMP, and gradient clipping. |
 | `OnnxExportable` | `train.model_proxy` | Opt-in capability interface for backends that can export to ONNX; `TorchModelProxy` implements it. |
 | `DefaultTrainer` | `train.trainer` | Runs the epoch loop: training, validation, scheduler step, checkpointing, early stopping, callbacks. |
+| `EpochLoopTrainer` | `train.trainer` | Shared epoch-loop scaffolding (progress bar, callback fan-out, checkpoint-directory setup, `metrics_history`) that `DefaultTrainer` and `GANTrainer` both build on via three hooks. Zero torch dependency. |
 | `EarlyStopper` | `train.utils` | Stops training when validation loss plateaus. |
 | `CheckpointWriter` | `train.utils` | Writes checkpoints to a unique, per-run directory. |
 | `TrainResult` | `train` | Frozen dataclass returned by `trainer.train(...)`. |
 | `KFoldTrainer` | `train.trainer` | Orchestrates K-Fold cross-validation: one model per fold via a delegate `BaseTrainer`, aggregated into a `KFoldResult`. Zero torch dependency. |
 | `KFoldResult` | `train` | Frozen dataclass aggregating per-fold `TrainResult`s (mean/std validation loss, best fold). |
 | `torch_kfold_data_payload` | `train.data_payload` | Builds a `TorchDataPayload` from fold indices via `torch.utils.data.Subset`. |
-| `TrainerCallback` | `train.callbacks` | Base class for `on_train_start` / `on_epoch_end` / `on_train_end` hooks. |
+| `GANModelProxy` | `train.model_proxy` | Adapts a generator/discriminator pair, their optimizers, and swappable loss callables for `GANTrainer`. Implements `OnnxExportable` (generator only). |
+| `GANTrainer` | `train.trainer` | Runs the GAN training loop: `n_critic` discriminator steps + one generator step per batch, cadence-based checkpointing, callbacks. |
+| `GANTrainResult` | `train` | Frozen dataclass returned by `GANTrainer.train(...)` (`g_loss_list`/`d_loss_list` per epoch). |
+| `TrainerCallback` | `train.callbacks` | Base class for `on_train_start` / `on_epoch_end` / `on_train_end` hooks; reused unmodified by `GANTrainer` (generator loss as `train_loss`, discriminator loss as `val_loss`). |
 | `MetricsCallback` | `evaluate.callbacks` | Computes named metrics on a loader every epoch. |
 | `ConfusionMatrix`, `ROC` | `evaluate.metrics.classification` | Classification metrics with a `.plot()`. |
 | `LossPlotter`, `ROCPlotter`, `ConfusionMatrixPlotter` | `evaluate.plots` | Matplotlib plotters used by the metric classes (or directly). |
@@ -239,8 +284,15 @@ make sure the core package keeps importing without the extra installed.
 
 ## Backlog
 
-Not currently planned, but tracked: a GAN trainer, and a second (non-PyTorch)
-backend. A second backend would follow the same capability-interface pattern
-`OnnxExportable` established — implement the capability on its own
-`ModelProxy` in whatever terms fit that framework, without touching the
-trainer or `BaseModelProxy`.
+Not currently planned, but tracked:
+- WGAN-GP-style gradient penalty for `GANTrainer` (today's `n_critic` loop
+  doesn't run the extra backward pass through the discriminator on
+  interpolated real/fake samples that a penalty term needs).
+- Conditional GANs (label-conditioned generator/discriminator) —
+  `GANModelProxy`/`GANTrainer` are explicitly unconditional today.
+- Multi-generator / multi-discriminator GAN topologies (e.g. CycleGAN-style)
+  — today's classes are explicitly single-G/single-D.
+- A second (non-PyTorch) backend. It would follow the same
+  capability-interface pattern `OnnxExportable` established — implement the
+  capability on its own `ModelProxy` in whatever terms fit that framework,
+  without touching the trainer or `BaseModelProxy`.
