@@ -7,6 +7,8 @@ from torch import nn, optim
 from mlinstruct.train.model_proxy import TorchModelProxy
 from mlinstruct.utils.exception import ModelProxyError
 
+onnxruntime = pytest.importorskip("onnxruntime")
+
 
 def test_default_model_name(proxy, tiny_model):
     assert proxy.get_model_name() == type(tiny_model).__name__
@@ -301,3 +303,62 @@ def test_lazy_import_returns_same_class_twice():
     from mlinstruct.train.model_proxy import TorchModelProxy as second_import
 
     assert first_import is second_import
+
+
+def test_export_onnx_writes_file(proxy, save_dir):
+    onnx_path = save_dir / "model.onnx"
+
+    result_path = proxy.export_onnx(onnx_path, torch.randn(1, 4))
+
+    assert result_path == onnx_path
+    assert onnx_path.exists()
+
+
+def test_export_onnx_output_matches_source_model(proxy, save_dir):
+    onnx_path = save_dir / "model.onnx"
+    input_sample = torch.randn(8, 4)
+
+    proxy.export_onnx(onnx_path, input_sample)
+
+    proxy._model.eval()
+    with torch.no_grad():
+        expected = proxy._model(input_sample).numpy()
+
+    session = onnxruntime.InferenceSession(str(onnx_path))
+    input_name = session.get_inputs()[0].name
+    (actual,) = session.run(None, {input_name: input_sample.numpy()})
+
+    assert np.allclose(actual, expected, atol=1e-5)
+
+
+def test_export_onnx_restores_training_mode(proxy, save_dir):
+    input_sample = torch.randn(1, 4)
+
+    proxy._model.train()
+    proxy.export_onnx(save_dir / "train_mode.onnx", input_sample)
+    assert proxy._model.training is True
+
+    proxy._model.eval()
+    proxy.export_onnx(save_dir / "eval_mode.onnx", input_sample)
+    assert proxy._model.training is False
+
+
+def test_export_onnx_rejects_missing_parent_dir(proxy, save_dir):
+    missing_dir_path = save_dir / "does_not_exist" / "model.onnx"
+
+    with pytest.raises(ModelProxyError):
+        proxy.export_onnx(missing_dir_path, torch.randn(1, 4))
+
+
+def test_export_onnx_without_onnx_extra_raises_import_error(proxy, save_dir, monkeypatch):
+    import mlinstruct.utils.optional_deps as optional_deps
+
+    real_find_spec = optional_deps.find_spec
+
+    def fake_find_spec(name):
+        return None if name == "onnx" else real_find_spec(name)
+
+    monkeypatch.setattr(optional_deps, "find_spec", fake_find_spec)
+
+    with pytest.raises(ImportError, match=r"mlinstruct\[onnx\]"):
+        proxy.export_onnx(save_dir / "model.onnx", torch.randn(1, 4))

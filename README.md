@@ -20,16 +20,28 @@ pip install mlinstruct
 
 # With the PyTorch backend, CPU build
 pip install mlinstruct[torch]
+
+# ... plus ONNX export support
+pip install mlinstruct[torch,onnx]
 ```
 
-For a CUDA build with `uv`, point at PyTorch's CUDA index instead of the
-default CPU one:
+For a CUDA build, use the `torch-cuda` extra instead of `torch` — it resolves
+`torch` from PyTorch's cu126 index automatically (via `uv`'s per-extra
+`tool.uv.sources`, already configured in this project's `pyproject.toml`):
 
 ```bash
-uv add mlinstruct[torch] --index https://download.pytorch.org/whl/cu126
+uv add mlinstruct[torch-cuda]
 ```
 
-Requires Python >= 3.12. `mlinstruct[torch]` requires `torch>=2.6`.
+`torch` and `torch-cuda` are declared as conflicting extras, so `uv` refuses
+to install both at once. This only works through `uv`; plain `pip install
+mlinstruct[torch-cuda]` installs the same PyPI `torch` as `mlinstruct[torch]`
+since pip has no notion of `tool.uv.sources` — pip users who need the cu126
+build should pass `--index-url https://download.pytorch.org/whl/cu126`
+themselves.
+
+Requires Python >= 3.12. `mlinstruct[torch]` / `mlinstruct[torch-cuda]`
+require `torch>=2.6`.
 
 ## Quickstart
 
@@ -133,12 +145,30 @@ class PrintOnEpochEnd(TrainerCallback):
         print(f"epoch {epoch}: train={train_loss:.4f} val={val_loss:.4f}")
 ```
 
+## ONNX export
+
+`TorchModelProxy` implements `OnnxExportable`, a backend-agnostic capability
+interface (`isinstance(proxy, OnnxExportable)`) that any future `ModelProxy`
+can opt into on its own terms. Requires the `onnx` extra:
+
+```python
+proxy.export_onnx(Path("model.onnx"), input_sample=torch.randn(1, 4))
+```
+
+`input_sample` is a representative single batch used for tracing/shape
+inference. Extra keyword arguments (`input_names`, `dynamic_shapes`,
+`opset_version`, ...) pass straight through to `torch.onnx.export`; mlinstruct
+deliberately doesn't pin its own names for these since torch's exporter API
+has been shifting release to release. Pass `dynamo=False` as an escape hatch
+for models that don't trace cleanly under the default dynamo-based exporter.
+
 ## API overview
 
 | Class | Module | Purpose |
 |---|---|---|
 | `TorchDataPayload` | `train.data_payload` | Wraps train/val/test `DataLoader`s. |
 | `TorchModelProxy` | `train.model_proxy` | Adapts a model, optimizer, loss, and optional scheduler to the trainer; owns device placement, AMP, and gradient clipping. |
+| `OnnxExportable` | `train.model_proxy` | Opt-in capability interface for backends that can export to ONNX; `TorchModelProxy` implements it. |
 | `DefaultTrainer` | `train.trainer` | Runs the epoch loop: training, validation, scheduler step, checkpointing, early stopping, callbacks. |
 | `EarlyStopper` | `train.utils` | Stops training when validation loss plateaus. |
 | `CheckpointWriter` | `train.utils` | Writes checkpoints to a unique, per-run directory. |
@@ -151,7 +181,7 @@ class PrintOnEpochEnd(TrainerCallback):
 ## Contributing
 
 ```bash
-uv sync --extra torch --group test --group dev
+uv sync --extra torch --extra onnx --group test --group dev
 uv run ruff check .
 uv run ruff format .
 uv run pytest
@@ -163,4 +193,7 @@ make sure the core package keeps importing without the extra installed.
 ## Backlog
 
 Not currently planned, but tracked: KFold cross-validation, a GAN trainer,
-ONNX export, and a second (non-PyTorch) backend.
+and a second (non-PyTorch) backend. A second backend would follow the same
+capability-interface pattern `OnnxExportable` established — implement the
+capability on its own `ModelProxy` in whatever terms fit that framework,
+without touching the trainer or `BaseModelProxy`.

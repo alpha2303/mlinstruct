@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -11,14 +11,16 @@ from torch.utils.data import DataLoader
 
 from mlinstruct import __version__
 from mlinstruct.train.model_proxy.base_model_proxy import BaseModelProxy
+from mlinstruct.train.model_proxy.onnx_exportable import OnnxExportable
 from mlinstruct.train.utils.device import move_to_device, resolve_device
 from mlinstruct.utils.exception import ModelProxyError
+from mlinstruct.utils.optional_deps import require
 
 if TYPE_CHECKING:
     import torchinfo
 
 
-class TorchModelProxy(BaseModelProxy):
+class TorchModelProxy(BaseModelProxy, OnnxExportable):
     """PyTorch model proxy for handling model training and evaluation.
 
     This class provides an interface for training and evaluating PyTorch models
@@ -307,3 +309,38 @@ class TorchModelProxy(BaseModelProxy):
         import torchinfo
 
         return torchinfo.summary(self._model)
+
+    def export_onnx(
+        self, save_path: Path, input_sample: Any, *, dynamo: bool = True, **kwargs: Any
+    ) -> Path:
+        """Export the model to ONNX.
+
+        Args:
+            save_path (Path): The file path to write the ONNX model to.
+            input_sample (Any): A representative single batch used for tracing/shape
+                inference, in whatever type the model's forward pass expects.
+            dynamo (bool, optional): Use torch's dynamo-based exporter. Defaults to True.
+            **kwargs (Any): Passed through to torch.onnx.export (e.g. input_names,
+                dynamic_shapes, opset_version).
+
+        Returns:
+            Path: The path the ONNX model was written to.
+
+        Raises:
+            ModelProxyError: If save_path's parent directory does not exist.
+        """
+        require("onnx", extra="onnx", symbol="TorchModelProxy.export_onnx")
+        if dynamo:
+            require("onnxscript", extra="onnx", symbol="TorchModelProxy.export_onnx(dynamo=True)")
+        if not save_path.parent.exists():
+            raise ModelProxyError("ONNX export path's parent directory does not exist.")
+
+        was_training = self._model.training
+        self._model.eval()
+        try:
+            sample = move_to_device(input_sample, self._device)
+            torch.onnx.export(self._model, sample, str(save_path), dynamo=dynamo, **kwargs)
+        finally:
+            self._model.train(was_training)
+
+        return save_path
