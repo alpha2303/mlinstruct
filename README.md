@@ -91,8 +91,8 @@ y_true, y_pred = proxy.predict(payload.get_val_data())
 ConfusionMatrix.from_predictions(y_true, y_pred.argmax(axis=1)).plot()
 ```
 
-See [`examples/toy_regression.py`](examples/toy_regression.py) for a
-complete, runnable script.
+See [`examples/`](examples/) for complete, runnable scripts covering this and
+every other feature documented below.
 
 ## Resuming training
 
