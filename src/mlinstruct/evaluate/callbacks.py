@@ -2,7 +2,6 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from mlinstruct.evaluate.metrics.classification.confusion_matrix import ConfusionMatrix
 from mlinstruct.train.callbacks import TrainerCallback
 
 
@@ -13,6 +12,8 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 def confusion_matrix_metric(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Accuracy computed from a ConfusionMatrix's diagonal (correct predictions)."""
+    from mlinstruct.evaluate.metrics.classification.confusion_matrix import ConfusionMatrix
+
     matrix = ConfusionMatrix.from_predictions(y_true, y_pred).as_ndarray()
     return float(matrix.trace() / matrix.sum())
 

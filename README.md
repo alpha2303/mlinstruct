@@ -91,8 +91,8 @@ y_true, y_pred = proxy.predict(payload.get_val_data())
 ConfusionMatrix.from_predictions(y_true, y_pred.argmax(axis=1)).plot()
 ```
 
-See [`examples/toy_regression.py`](examples/toy_regression.py) for a
-complete, runnable script.
+See [`examples/`](examples/) for complete, runnable scripts covering this and
+every other feature documented below.
 
 ## Resuming training
 
@@ -171,12 +171,12 @@ cross-validator) only ever sees integer indices; applying those indices to
 real data is your `data_payload_factory`'s job:
 
 ```python
-from functools import partial
-
 from sklearn.model_selection import KFold
 
 from mlinstruct.train.data_payload import torch_kfold_data_payload
 from mlinstruct.train.trainer import KFoldTrainer
+
+dataset = TensorDataset(inputs, targets)
 
 
 def model_proxy_factory():
@@ -186,11 +186,20 @@ def model_proxy_factory():
     )
 
 
+def data_payload_factory(train_idx, val_idx):
+    # KFoldTrainer calls this positionally as factory(train_idx, val_idx), so
+    # functools.partial(torch_kfold_data_payload, dataset=dataset, batch_size=16)
+    # doesn't work here: those positional args would collide with the
+    # keyword-bound dataset (torch_kfold_data_payload's first parameter). A
+    # plain wrapper passing everything by keyword sidesteps that.
+    return torch_kfold_data_payload(
+        dataset=dataset, train_idx=train_idx, val_idx=val_idx, batch_size=16
+    )
+
+
 kfold_trainer = KFoldTrainer(
     model_proxy_factory=model_proxy_factory,
-    data_payload_factory=partial(
-        torch_kfold_data_payload, dataset=TensorDataset(inputs, targets), batch_size=16
-    ),
+    data_payload_factory=data_payload_factory,
     X=inputs,
     cv=KFold(n_splits=5, shuffle=True, random_state=0),
 )
