@@ -98,3 +98,62 @@ def test_gan_trainer_without_torch_extra_raises_import_error():
 
     assert result.returncode != 0
     assert "mlinstruct[torch]" in result.stderr
+
+
+def test_evaluate_lazy_submodules_resolve():
+    import mlinstruct.evaluate as evaluate_module
+    from mlinstruct.evaluate import callbacks, metrics, plots
+
+    assert evaluate_module.callbacks is callbacks
+    assert evaluate_module.metrics is metrics
+    assert evaluate_module.plots is plots
+
+
+def test_evaluate_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.evaluate as evaluate_module
+
+    with pytest.raises(AttributeError):
+        _ = evaluate_module.DoesNotExist
+
+
+def test_evaluate_metrics_lazy_symbols_resolve():
+    import mlinstruct.evaluate.metrics as metrics_module
+    from mlinstruct.evaluate.metrics import classification
+    from mlinstruct.evaluate.metrics.base_metrics import BaseMetrics
+
+    assert metrics_module.BaseMetrics is BaseMetrics
+    assert metrics_module.classification is classification
+
+
+def test_evaluate_metrics_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.evaluate.metrics as metrics_module
+
+    with pytest.raises(AttributeError):
+        _ = metrics_module.DoesNotExist
+
+
+def test_evaluate_metrics_classification_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.evaluate.metrics.classification as classification_module
+
+    with pytest.raises(AttributeError):
+        _ = classification_module.DoesNotExist
+
+
+def test_evaluate_plots_lazy_symbols_resolve():
+    import mlinstruct.evaluate.plots as plots_module
+    from mlinstruct.evaluate.plots.base_plotter import BasePlotter
+    from mlinstruct.evaluate.plots.cm_plotter import ConfusionMatrixPlotter
+    from mlinstruct.evaluate.plots.loss_plotter import LossPlotter
+    from mlinstruct.evaluate.plots.roc_plotter import ROCPlotter
+
+    assert plots_module.BasePlotter is BasePlotter
+    assert plots_module.ConfusionMatrixPlotter is ConfusionMatrixPlotter
+    assert plots_module.LossPlotter is LossPlotter
+    assert plots_module.ROCPlotter is ROCPlotter
+
+
+def test_evaluate_plots_lazy_getattr_unknown_name_raises_attribute_error():
+    import mlinstruct.evaluate.plots as plots_module
+
+    with pytest.raises(AttributeError):
+        _ = plots_module.DoesNotExist

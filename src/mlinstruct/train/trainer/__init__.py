@@ -3,13 +3,19 @@ from typing import Any
 from mlinstruct.train.trainer.base_trainer import BaseTrainer
 from mlinstruct.train.trainer.default_trainer import DefaultTrainer
 from mlinstruct.train.trainer.epoch_loop_trainer import EpochLoopTrainer
-from mlinstruct.train.trainer.kfold_trainer import KFoldTrainer
 from mlinstruct.utils.optional_deps import require
 
 __all__ = ["BaseTrainer", "EpochLoopTrainer", "DefaultTrainer", "KFoldTrainer", "GANTrainer"]
 
 
 def __getattr__(name: str) -> Any:
+    if name == "KFoldTrainer":
+        # Not torch-gated (KFoldTrainer has zero torch dependency), but sklearn.model_selection
+        # is a heavy import (~0.8s, pulls in scipy.stats) deferred until actually needed.
+        from mlinstruct.train.trainer.kfold_trainer import KFoldTrainer
+
+        return KFoldTrainer
+
     if name == "GANTrainer":
         require("torch", extra="torch", symbol="GANTrainer")
         from mlinstruct.train.trainer.gan_trainer import GANTrainer
